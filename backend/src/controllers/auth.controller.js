@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import prisma from "../db/prisma";
+import prisma from "../db/prisma.js";
 
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -45,7 +45,7 @@ export const handleLogin = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password." });
     }
