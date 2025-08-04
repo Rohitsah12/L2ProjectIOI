@@ -39,7 +39,7 @@ enum RankingScope {
 model College {
   id           String  @id @default(cuid()) @map("id")
   name         String
-  email        String
+  email        String  @unique
   passwordHash String  @map("password_hash")
 
   // Relations
@@ -158,7 +158,7 @@ model Subtopic {
 
 model Platform {
   id        String @id @default(cuid()) @map("id")
-  name      String
+  name      String @unique
 
   // Relations
   problems           Problem[]
