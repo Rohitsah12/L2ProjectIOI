@@ -114,3 +114,49 @@ export const getBatchById = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 };
+
+export const getBatchTeacher = async (req, res) => {
+  try {
+    const teacherId = req.user?.id; 
+
+    if (!teacherId) {
+      return res.status(401).json({ error: 'Teacher authentication failed.' });
+    }
+
+    const teacherBatches = await prisma.teacherBatch.findMany({
+      where: { teacherId },
+      include: {
+        batch: {
+          include: {
+            college: {
+              select: { id: true, name: true }
+            },
+            teacherBatch: {
+              include: {
+                teacher: {
+                  select: { id: true, name: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const batches = teacherBatches.map(tb => ({
+      id: tb.batch.id,
+      name: tb.batch.name,
+      collegeId: tb.batch.college.id,
+      collegeName: tb.batch.college.name,
+      teachers: tb.batch.teacherBatch.map(ttb => ({
+        id: ttb.teacher.id,
+        name: ttb.teacher.name
+      }))
+    }));
+
+    return res.status(200).json({ batches });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}

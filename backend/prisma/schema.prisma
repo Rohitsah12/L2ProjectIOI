@@ -84,7 +84,10 @@ model User {
   problemAssignments   ProblemAssignment[]
   problemStatuses      ProblemStatus[]
   rankings             Ranking[]
-  platformAccounts     StudentPlatformAccount[] // Relation to student's platform IDs
+  platformAccounts     StudentPlatformAccount[]
+
+  topicsCreated        Topic[]             @relation("UserTopicsCreated")
+  subtopicsCreated     Subtopic[]          @relation("UserSubtopicsCreated")
 
   @@index([collegeId])
   @@index([role])
@@ -96,7 +99,7 @@ model StudentPlatformAccount {
   id         String   @id @default(cuid()) @map("id")
   userId     String   @map("user_id")
   platformId String   @map("platform_id")
-  handle     String   // student’s id/username on the platform
+  handle     String   // student's id/username on the platform
 
   // Relations
   user      User      @relation(fields: [userId], references: [id])
@@ -134,27 +137,28 @@ model StudentBatch {
 }
 
 model Topic {
-  id        String @id @default(cuid()) @map("id")
-  name      String
+  id         String  @id @default(cuid()) @map("id")
+  name       String
+  createdBy  String  @map("created_by")
 
-  // Relations
-  subtopics Subtopic[]
-  problems  Problem[]
-
+  creator    User    @relation("UserTopicsCreated", fields: [createdBy], references: [id])
+  subtopics  Subtopic[]
+  problems   Problem[]
   @@map("topic")
 }
 
 model Subtopic {
-  id        String @id @default(cuid()) @map("id")
-  name      String
-  topicId   String @map("topic_id")
-
+  id         String  @id @default(cuid()) @map("id")
+  name       String
+  topicId    String  @map("topic_id")
+  createdBy  String  @map("created_by")
   // Relations
-  topic     Topic    @relation(fields: [topicId], references: [id])
-  problems  Problem[]
-
+  topic      Topic   @relation(fields: [topicId], references: [id])
+  creator    User    @relation("UserSubtopicsCreated", fields: [createdBy], references: [id])
+  problems   Problem[]
   @@map("subtopic")
 }
+
 
 model Platform {
   id        String @id @default(cuid()) @map("id")

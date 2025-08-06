@@ -8,6 +8,7 @@ import teacherRouter from './routes/teachers.routes.js';
 import studentRouter from './routes/students.routes.js';
 import batchRouter from './routes/batch.routes.js';
 import platformRouter from './routes/platform.routes.js';
+import assignmentRouter from './routes/assignment.routes.js';
 
 
 const app=express();
@@ -28,6 +29,7 @@ app.use('/api/batch',batchRouter)
 app.use('/api/teacher',teacherRouter)
 app.use('/api/student',studentRouter)
 app.use('/api/platform',platformRouter)
+app.use('/api/assignment',assignmentRouter)
 
 
 

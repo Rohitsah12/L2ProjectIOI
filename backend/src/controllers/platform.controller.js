@@ -33,3 +33,16 @@ export const createPlatform = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error.' });
   }
 };
+
+export const getAllPlatforms = async (req, res) => {
+  try {
+    const platforms = await prisma.platform.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' }
+    });
+    res.status(200).json({ platforms });
+  } catch (error) {
+    console.error('Error in getAllPlatforms:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
