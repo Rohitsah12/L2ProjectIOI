@@ -2,7 +2,7 @@ const redirectByRole = (role, navigate) => {
     const roleRoutes = {
         STUDENT:"/student-dashboard",
         TEACHER:"/teacher-dashboard",
-        INSTITUTION:"/institution-dashboard"
+        COLLEGE:"/college-dashboard"
     }
     navigate(roleRoutes[role] || '/homepage');
 

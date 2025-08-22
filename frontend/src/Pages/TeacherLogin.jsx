@@ -1,13 +1,19 @@
+
 // import { useForm } from "react-hook-form";
 // import { z } from "zod";
 // import { zodResolver } from "@hookform/resolvers/zod";
+// import axios from "axios";
+// import Cookies from "js-cookie";
+// import { toast } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
+// import { useNavigate } from "react-router";
 
+// //  Validation Schema without teacherId
 // const teacherLoginSchema = z.object({
 //   email: z.string().email({ message: "Invalid email address" }),
 //   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-//   // Adding teacher-specific field if needed (e.g., teacherId)
-//   teacherId: z.string().min(1, { message: "Teacher ID is required" }),
 // });
+
 
 // function TeacherLogin() {
 //   const {
@@ -17,113 +23,136 @@
 //   } = useForm({
 //     resolver: zodResolver(teacherLoginSchema),
 //   });
+//   const navigate=useNavigate()
 
 //   const onSubmit = async (data) => {
 //     try {
-//       console.log('Teacher login data:', data);
-//       // API call would go here
-//       // Example: await axios.post('/api/teachers/login', data);
+//       const payload = {
+//         email: data.email,
+//         password: data.password,
+//         role: "TEACHER",
+//       };
+
+//       // API call with cookies enabled
+//       const res = await axios.post("http://localhost:3000/api/auth/login", payload, {
+//         withCredentials: true,
+//       });
+//       const {user,message}=res.data
+//       toast.success(message || "Login Successful", { position: "top-right" });
+//       if (user.role === "TEACHER") navigate("/teacher-dashboard");
+//         else navigate("/");
+//       console.log("Login success:", res.data);
 //     } catch (error) {
-//       console.error('Login error:', error);
+//       console.error("Login error:", error.response?.data || error.message);
+//       toast.error(error.response?.data?.message || "Login failed. Please try again.");
 //     }
 //   };
 
 //   return (
 //     <div className="min-h-screen flex items-center justify-center bg-white">
+//       {/* Left Side Image */}
 //       <div className="hidden md:flex w-1/2 items-center justify-center">
-//         <img src="/teacherlogin.png" className="max-w-sm" alt="" />
+//         <img src="/teacherlogin.png" className="max-w-sm" alt="Teacher Illustration" />
 //       </div>
 
-//       <div className="flex w-full md:w-1/2  justify-center items-center">
-
-//         <div className="card  w-[300px] lg:w-[450px] shadow-xl bg-base-100 p-6">
+//       {/* Login Card */}
+//       <div className="flex w-full md:w-1/2 justify-center items-center">
+//         <div className="card w-[300px] lg:w-[450px] shadow-xl bg-base-100 p-6">
 //           <img src="/logo.png" className="h-20 w-20 mx-auto" alt="School Logo" />
 //           <h2 className="text-2xl font-bold text-center mb-6">Teacher Login</h2>
 
-//           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col justify-center space-y-4">
-//             {/* Email Field */}
-//             <div className="form-control w-full">
+//           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-4">
+//             {/* Email */}
+//             <div className="form-control">
 //               <input
 //                 type="email"
-//                 {...register('email')}
+//                 {...register("email")}
 //                 className="input input-bordered w-full focus:outline-none focus:border-sky-500 hover:border-sky-500"
 //                 placeholder="Teacher Email"
 //               />
-//               {errors.email && (
-//                 <div className="mt-1 text-red-500 text-sm">
-//                   {errors.email.message}
-//                 </div>
-//               )}
+//               {errors.email && <p className="mt-1 text-red-500 text-sm">{errors.email.message}</p>}
 //             </div>
 
-//             {/* Password Field */}
-//             <div className="form-control w-full">
+//             {/* Password */}
+//             <div className="form-control">
 //               <input
 //                 type="password"
-//                 {...register('password')}
+//                 {...register("password")}
 //                 className="input input-bordered w-full focus:outline-none focus:border-sky-500 hover:border-sky-500"
 //                 placeholder="Password"
 //               />
-//               {errors.password && (
-//                 <div className="mt-1 text-red-500 text-sm">
-//                   {errors.password.message}
-//                 </div>
-//               )}
+//               {errors.password && <p className="mt-1 text-red-500 text-sm">{errors.password.message}</p>}
 //             </div>
 
-//             {/* Submit Button */}
-//             <div className="form-control w-full mt-4">
-//               <button 
-//                 className="btn bg-sky-500 w-full text-white" 
-//                 type="submit" 
+//             {/* Submit */}
+//             <div className="form-control mt-4">
+//               <button
+//                 className="btn bg-sky-500 w-full text-white"
+//                 type="submit"
 //                 disabled={isSubmitting}
 //               >
 //                 {isSubmitting ? (
 //                   <>
-//                     <span className="loading loading-spinner"></span>
-//                     Logging in...
+//                     <span className="loading loading-spinner"></span> Logging in...
 //                   </>
-//                 ) : 'Login as Teacher'}
+//                 ) : (
+//                   "Login as Teacher"
+//                 )}
 //               </button>
 //             </div>
 //           </form>
-
-          
 //         </div>
 //       </div>
-      
 //     </div>
 //   );
 // }
 
 // export default TeacherLogin;
 
-// src/TeacherLogin.jsx
+
+
+
+
+
+
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import Cookies from "js-cookie";
-import { toast } from "react-toastify";
+import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router";
+import { handleError, handleSuccess } from "../utils/notification";
+import redirectByRole from "../utils/redirectByRole";
 
-// ✅ Validation Schema without teacherId
-const teacherLoginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+//  Validation schema
+const loginSchema = z.object({
+  email: z.string().email({ message: "Invalid email" }),
+  password: z.string().min(8, { message: "Password should be at least 8 characters" }),
 });
 
+//  Axios instance 
+const api = axios.create({
+  baseURL: "http://localhost:3000/api",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
 function TeacherLogin() {
+  
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(teacherLoginSchema),
+    resolver: zodResolver(loginSchema),
   });
-  const navigate=useNavigate()
 
   const onSubmit = async (data) => {
     try {
@@ -133,78 +162,94 @@ function TeacherLogin() {
         role: "TEACHER",
       };
 
-      // API call with cookies enabled
-      const res = await axios.post("http://localhost:3000/api/auth/login", payload, {
-        withCredentials: true,
-      });
-      const {user,message}=res.data
-      toast.success(message || "Login Successful", { position: "top-right" });
-      if (user.role === "TEACHER") navigate("/teacher-dashboard");
-        else navigate("/");
-      console.log("Login success:", res.data);
-    } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
-      toast.error(error.response?.data?.message || "Login failed. Please try again.");
+      const res = await api.post("/auth/login", payload);
+      const { user, message } = res.data;
+
+      if (user?.role) {
+        //  Store role & username in cookies
+        Cookies.set("role", user.role, { expires: 7 });
+        Cookies.set("loggedInUser", user.name, { expires: 7 });
+        handleSuccess(message || "Login Successfully");
+
+        redirectByRole(user.role, navigate);
+      } else {
+        handleError(message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      handleError(err.response?.data?.message || "Something went wrong");
     }
   };
+  
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      {/* Left Side Image */}
-      <div className="hidden md:flex w-1/2 items-center justify-center">
-        <img src="/teacherlogin.png" className="max-w-sm" alt="Teacher Illustration" />
-      </div>
-
-      {/* Login Card */}
-      <div className="flex w-full md:w-1/2 justify-center items-center">
-        <div className="card w-[300px] lg:w-[450px] shadow-xl bg-base-100 p-6">
-          <img src="/logo.png" className="h-20 w-20 mx-auto" alt="School Logo" />
+    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+      {/* Left Side */}
+      <div className="flex w-full md:w-1/2 items-center justify-center">
+        <div className="card w-full max-w-md shadow-xl bg-base-100 p-6">
+          <img src="/logo.png" className="h-20 w-20 mx-auto" alt="Logo" />
           <h2 className="text-2xl font-bold text-center mb-6">Teacher Login</h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-4">
+          {/* Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col items-center space-y-4">
             {/* Email */}
-            <div className="form-control">
+            <div className="form-control w-full">
               <input
                 type="email"
                 {...register("email")}
-                className="input input-bordered w-full focus:outline-none focus:border-sky-500 hover:border-sky-500"
-                placeholder="Teacher Email"
+                className="input input-bordered w-full focus:outline-none focus:border-sky-500 hover:border-sky-400"
+                placeholder="E-mail"
               />
-              {errors.email && <p className="mt-1 text-red-500 text-sm">{errors.email.message}</p>}
+              {errors.email && (
+                <label className="label text-red-500 text-sm">{errors.email.message}</label>
+              )}
             </div>
 
             {/* Password */}
-            <div className="form-control">
+            <div className="form-control w-full">
               <input
                 type="password"
                 {...register("password")}
-                className="input input-bordered w-full focus:outline-none focus:border-sky-500 hover:border-sky-500"
+                className="input input-bordered w-full focus:outline-none focus:border-sky-500 hover:border-sky-400"
                 placeholder="Password"
               />
-              {errors.password && <p className="mt-1 text-red-500 text-sm">{errors.password.message}</p>}
+              {errors.password && (
+                <label className="label text-red-500 text-sm">{errors.password.message}</label>
+              )}
             </div>
 
             {/* Submit */}
-            <div className="form-control mt-4">
+            <div className="form-control w-full mt-4">
               <button
-                className="btn bg-sky-500 w-full text-white"
+                className="btn bg-sky-500 hover:bg-sky-600 text-white w-full"
                 type="submit"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? (
-                  <>
-                    <span className="loading loading-spinner"></span> Logging in...
-                  </>
-                ) : (
-                  "Login as Teacher"
-                )}
+                {isSubmitting ? "Logging in..." : "Login"}
               </button>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Right Side */}
+      <div className="hidden md:flex w-1/2 items-center justify-center">
+        <img src="/teacherlogin.png" alt="Teacher Login" className="max-w-sm" />
+      </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 }
 
 export default TeacherLogin;
+

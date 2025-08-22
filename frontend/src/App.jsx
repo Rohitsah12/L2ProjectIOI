@@ -9,6 +9,9 @@ import TeacherLogin from "./Pages/TeacherLogin";
 import InstitutionLogin from "./Pages/InstitutionLogin";
 import ProtectedRoute from './Components/ProtectedRoute'
 import StudentDashboard from './Pages/StudentDashboard'
+import TeacherDashboard from './Pages/TeacherDashboard'
+import CollegeDashboard from './Pages/CollegeDashboarc'
+
 
 
 
@@ -35,7 +38,7 @@ function App() {
           path="/college-dashboard"
           element={<ProtectedRoute role="COLLEGE" element={<CollegeDashboard />} />}
         />
-              </Routes>
+      </Routes>
     </>
   )
 }
