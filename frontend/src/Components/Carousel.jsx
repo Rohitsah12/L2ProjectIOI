@@ -19,11 +19,21 @@ export default function Carousel({ slides }){
     const goNext = () => {
         prev = (prev + 1) % slides.length;
     }
+   
 
     return(
         <div>
-            {slides.map((value, index) => {
-                <div index>
+            {slides.map((value, key) => {
+                <div index={key}>
+                    <div>
+                        <div>
+                            <img src="" alt="" />
+                        </div>
+                        <div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 

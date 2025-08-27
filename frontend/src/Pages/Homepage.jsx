@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Users, BookOpen, BarChart3, Code, Shield, Zap, CheckCircle, Star, Menu, X, ArrowRight, TrendingUp, Award, Target, Activity, Eye, Trophy, Layers, GraduationCap, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import { FaInstagram,FaFacebook, FaWhatsapp, FaXTwitter } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 
 
@@ -335,14 +335,14 @@ export default function CodeLyticsLanding() {
                     <div><img src="https://www.vedantu.com/cdn/images/new-home-page/B2/summer-camp.svg" alt="" /></div>
                     <div className='text-base/5'>
                       <div className='mb-8'>
-                          <h4 className='text-purple-500 font-medium'>Class 1 - 6</h4>
-                          <h3 className='font-bold'>Spoken English Program</h3>
-                          <h3 className='font-light '>master fluency in English speaking</h3>
+                          <h4 className='text-purple-500 font-medium'>We Provide</h4>
+                          <h3 className='font-bold'>Real-Time Student Progress Tracking</h3>
+                          <h3 className='font-light '>Monitor every student's progress across platforms —no manual work or spreadsheets.</h3>
 
                       </div>
-                      <div>
+                      {/* <div>
                           <button className='bg-gray-800 text-white px-7 py-2 rounded-md '>Explore</button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>
@@ -352,14 +352,14 @@ export default function CodeLyticsLanding() {
                     <div><img src="https://www.vedantu.com/cdn/images/new-home-page/B2/vsk-spoken-english.svg" alt="" /></div>
                     <div className='text-base/5'>
                       <div className='mb-8'>
-                          <h4 className='text-blue-900 font-medium'>Class 1 - 6</h4>
-                          <h3 className='font-bold'>Spoken English Program</h3>
-                          <h3 className='font-light '>master fluency in English speaking</h3>
+                          <h4 className='text-blue-900 font-medium'>We Provide</h4>
+                          <h3 className='font-bold'>Cross-Platform Assignment Integration</h3>
+                          <h3 className='font-light '>Seamlessly add questions from LeetCode, GeeksforGeeks, and other popular coding platforms.</h3>
 
                       </div>
-                      <div>
+                      {/* <div>
                           <button className='bg-gray-800 text-white px-7 py-2 rounded-md '>Explore</button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>
@@ -369,14 +369,14 @@ export default function CodeLyticsLanding() {
                     <div><img src="https://www.vedantu.com/cdn/images/new-home-page/B2/vsk-math.svg" alt="" /></div>
                     <div className='text-base/5'>
                       <div className='mb-8'>
-                          <h4 className='text-orange-500 font-medium'>Class 1 - 6</h4>
-                          <h3 className='font-bold'>Spoken English Program</h3>
-                          <h3 className='font-light '>master fluency in English speaking</h3>
+                          <h4 className='text-orange-500 font-medium'>We Provide</h4>
+                          <h3 className='font-bold'>Performance Analytics & Dashboards</h3>
+                          <h3 className='font-light '>Track every student's progress with detailed analytics and performance insights.</h3>
 
                       </div>
-                      <div>
+                      {/* <div>
                           <button className='bg-gray-800 text-white px-7 py-2 rounded-md '>Explore</button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>
@@ -386,14 +386,14 @@ export default function CodeLyticsLanding() {
                     <div><img src="https://www.vedantu.com/cdn/images/new-home-page/B2/coding-classes.svg" alt="" /></div>
                     <div className='text-base/5'>
                       <div className='mb-8'>
-                          <h4 className='text-blue-500 font-medium'>Class 1 - 6</h4>
-                          <h3 className='font-bold'>Spoken English Program</h3>
-                          <h3 className='font-light '>master fluency in English speaking</h3>
+                          <h4 className='text-blue-500 font-medium'>We Provide</h4>
+                          <h3 className='font-bold'>Leaderboards & Gamification</h3>
+                          <h3 className='font-light '>Motivate students with weekly leaderboards and recognize top performers institution-wide.</h3>
 
                       </div>
-                      <div>
+                      {/* <div>
                           <button className='bg-gray-800 text-white px-7 py-2 rounded-md '>Explore</button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>
@@ -440,6 +440,113 @@ export default function CodeLyticsLanding() {
           
         </div>
       </section>
+
+
+      <section className='h-80 '>
+        <div className='w-full h-full border-1 grid grid-cols-[4fr_8fr] '>
+          <div className='flex items-center justify-center'>
+            <h1 className='font-bold text-4xl text-center border-t border-l p-2'>Weekly Active Coders</h1>
+          </div>
+          <div className='flex justify-center gap-4 items-center' >
+
+            <div className='border h-40 w-40 flex flex-col justify-between'>
+              <div className='h-[80%] flex justify-center items-center'>
+                <img src="../footerLogo.png" alt="" className='rounded-full h-[70%] w-[70%] border' />
+              </div>
+              <div className='text-center'> 
+                <div className=''>#3</div>
+                <div className=''> deepali</div>
+              </div>
+            </div>
+
+            <div className='border h-60 w-60'>
+              <div className='h-[80%] flex justify-center items-center'>
+                <img src="../footerLogo.png" alt="" className='rounded-full h-[70%] w-[70%] border' />
+              </div>
+              <div className='text-center'> 
+                <div className=''>#1</div>
+                <div className=''> deepali</div>
+              </div>
+            </div>
+
+            <div className='border h-50 w-50 flex flex-col justify-between'>
+              <div className='h-[80%] flex justify-center items-center'>
+                <img src="../footerLogo.png" alt="" className='rounded-full h-[70%] w-[70%] border' />
+              </div>
+              <div className='text-center'> 
+                <div className=''>#2</div>
+                <div className=''> deepali</div>
+              </div>
+            </div>
+            
+
+          </div>
+        </div>
+        
+      </section>
+
+
+      {/* Footer */}
+      <footer className='bg-black w-full h-56 flex items-center'>
+        <div className='text-white w-full grid grid-cols-[3fr_6fr_2fr]'>
+          <div className='flex justify-center items-center'>
+            <img src="./footerLogo.png" alt="" height={300} width={300} />
+
+          </div>
+          <div className='flex justify-around items-center'>
+            <a href='#' >Terms & Conditions</a>
+            <a href='#'>Privacy Policy</a>
+            <a href='#'>Contact Us</a>
+
+          </div>
+          <div className="flex items-center gap-3 text-3xl text-gray-600">
+            {/* Instagram */}
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-pink-500 transition duration-300"
+            >
+              <FaInstagram />
+            </a>
+
+            {/* Facebook */}
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 transition duration-300"
+            >
+              <FaFacebook />
+            </a>
+
+            {/* X (Twitter) */}
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition duration-300"
+            >
+              <FaXTwitter />
+            </a>
+
+            {/* WhatsApp */}
+            <a
+              href="https://wa.me/1234567890"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-green-500 transition duration-300"
+            >
+              <FaWhatsapp />
+            </a>
+         </div>
+
+        </div>
+        <div>
+
+        </div>
+
+      </footer>
     </div>
   )
 
