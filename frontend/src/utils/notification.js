@@ -1,6 +1,8 @@
 import { toast } from "react-toastify";
 
 export const handleSuccess = (msg) => {
+  console.log("Toaster");
+  
   toast.success(msg, {
     position: "top-right",
     autoClose: 3000,

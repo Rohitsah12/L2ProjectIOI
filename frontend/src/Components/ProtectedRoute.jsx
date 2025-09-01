@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import axios from "axios"; // or fetch
+import axios from "axios"; 
 
 export default function ProtectedRoute({ role, element }) {
   const [loading, setLoading] = useState(true);
@@ -33,9 +33,19 @@ export default function ProtectedRoute({ role, element }) {
   if (loading) {
     return <div>Loading...</div>; 
   }
+  if(isAuthenticated && role==="COLLEGE"){
+    return <Navigate to="/college-dashboard" />
+  }
 
   if (!isAuthenticated && role=='STUDENT') {
     return <Navigate to="/student/login" />;
+  }
+
+  if (!isAuthenticated && role=='TEACHER') {
+    return <Navigate to="/teacher/login" />;
+  }
+  if (!isAuthenticated && role=='COLLEGE') {
+    return <Navigate to="/college/login" />;
   }
 
   
