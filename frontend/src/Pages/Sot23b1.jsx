@@ -7,7 +7,7 @@ import {
   LogOut,
   School,
 } from "lucide-react";
-import { is } from "zod/v4/locales";
+
 export default function Sot23B1() {
   return (
     <div className="flex h-screen bg-gray-50">

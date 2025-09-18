@@ -91,7 +91,7 @@ export default function Entry() {
 
          {/* Teacher */}
          <button
-           onClick={() => navigate("/teacher/login")}
+           onClick={() => navigate("/teacherEnd")}
            className="px-10 py-5 rounded-3xl bg-orange-300 font-bold text-black text-lg shadow-lg hover:bg-orange-400 hover:text-white hover:-rotate-2 hover:scale-110 transition-all duration-300"
          >
            Teacher
@@ -99,7 +99,7 @@ export default function Entry() {
 
          {/* Student */}
          <button
-           onClick={() => navigate("/student/login")}
+           onClick={() => navigate("/student-dashboard")}
            className="px-10 py-5 rounded-3xl bg-green-300 font-bold text-black text-lg shadow-lg hover:bg-green-400 hover:text-white hover:rotate-2 hover:scale-110 transition-all duration-300"
          >
            Student
