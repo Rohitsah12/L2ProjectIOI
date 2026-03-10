@@ -48,6 +48,16 @@ CREATE TABLE "user" (
 );
 
 -- CreateTable
+CREATE TABLE "student_platform_account" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "platform_id" TEXT NOT NULL,
+    "handle" TEXT NOT NULL,
+
+    CONSTRAINT "student_platform_account_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "teacher_batch" (
     "id" TEXT NOT NULL,
     "teacher_id" TEXT NOT NULL,
@@ -69,6 +79,7 @@ CREATE TABLE "student_batch" (
 CREATE TABLE "topic" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "created_by" TEXT NOT NULL,
 
     CONSTRAINT "topic_pkey" PRIMARY KEY ("id")
 );
@@ -78,6 +89,7 @@ CREATE TABLE "subtopic" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "topic_id" TEXT NOT NULL,
+    "created_by" TEXT NOT NULL,
 
     CONSTRAINT "subtopic_pkey" PRIMARY KEY ("id")
 );
@@ -146,6 +158,9 @@ CREATE TABLE "ranking" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "college_email_key" ON "college"("email");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 
 -- CreateIndex
@@ -164,10 +179,19 @@ CREATE INDEX "user_role_idx" ON "user"("role");
 CREATE INDEX "user_student_streak_idx" ON "user"("student_streak");
 
 -- CreateIndex
+CREATE INDEX "student_platform_account_handle_idx" ON "student_platform_account"("handle");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "student_platform_account_user_id_platform_id_key" ON "student_platform_account"("user_id", "platform_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "teacher_batch_teacher_id_batch_id_key" ON "teacher_batch"("teacher_id", "batch_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "student_batch_student_id_batch_id_key" ON "student_batch"("student_id", "batch_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "platform_name_key" ON "platform"("name");
 
 -- CreateIndex
 CREATE INDEX "problem_platform_id_idx" ON "problem"("platform_id");
@@ -224,6 +248,12 @@ ALTER TABLE "batch" ADD CONSTRAINT "batch_college_id_fkey" FOREIGN KEY ("college
 ALTER TABLE "user" ADD CONSTRAINT "user_college_id_fkey" FOREIGN KEY ("college_id") REFERENCES "college"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "student_platform_account" ADD CONSTRAINT "student_platform_account_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "student_platform_account" ADD CONSTRAINT "student_platform_account_platform_id_fkey" FOREIGN KEY ("platform_id") REFERENCES "platform"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "teacher_batch" ADD CONSTRAINT "teacher_batch_teacher_id_fkey" FOREIGN KEY ("teacher_id") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -236,7 +266,13 @@ ALTER TABLE "student_batch" ADD CONSTRAINT "student_batch_student_id_fkey" FOREI
 ALTER TABLE "student_batch" ADD CONSTRAINT "student_batch_batch_id_fkey" FOREIGN KEY ("batch_id") REFERENCES "batch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "topic" ADD CONSTRAINT "topic_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "subtopic" ADD CONSTRAINT "subtopic_topic_id_fkey" FOREIGN KEY ("topic_id") REFERENCES "topic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "subtopic" ADD CONSTRAINT "subtopic_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "problem" ADD CONSTRAINT "problem_platform_id_fkey" FOREIGN KEY ("platform_id") REFERENCES "platform"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

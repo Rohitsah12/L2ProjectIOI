@@ -1,11 +1,26 @@
+// =============================================================================
+// PRISMA SCHEMA – only what your code uses right now (no Ranking yet)
+// =============================================================================
+// This file defines: (1) which DB you use, (2) where the client is generated,
+// (3) your tables (models) and how they link (relations).
+// After editing: run  npx prisma generate  then  npx prisma db push  (or migrate)
+// =============================================================================
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
+// ↑ Tells Prisma: “Generate the JS/TS client into backend/src/generated/prisma.”
+//  Your code does:  import { PrismaClient } from "../generated/prisma/client"
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
+// ↑ “I use PostgreSQL.” The actual URL is in prisma.config.ts (DATABASE_URL).
+
+// =============================================================================
+// ENUMS – fixed list of allowed values (stored as a type in the DB)
+// =============================================================================
+// Use when a field can only be one of a few options. Better than random strings.
 
 enum Role {
   STUDENT
