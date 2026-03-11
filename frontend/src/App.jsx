@@ -9,6 +9,8 @@ import ProtectedRoute from './Components/ProtectedRoute'
 import StudentDashboard from './Pages/StudentDashboard'
 import TeacherDashboard from './Pages/TeacherDashboard'
 import CollegeDashboard from './Pages/CollegeDashboard'
+import CollegeSetting from './Pages/CollegeSetting'
+
 import Entry from './Pages/Entry';
 import BatchSetting from './Pages/BatchSetting'
 import TeacherSetting from './Pages/TeacherSetting'
@@ -56,6 +58,8 @@ function App() {
         
         <Route path='/entry' element={<Entry/>}></Route>
         <Route path='/college-dashboard' element={<CollegeDashboard/>}/>
+        <Route path='/college-setting' element={<CollegeSetting/>}/>
+
         <Route path='/batch-setting' element={<BatchSetting/>}></Route>
         <Route path='/teacher-setting' element={<TeacherSetting/>}></Route>
         <Route path='/teacher/:id' element={<TeacherDetails/>}></Route>

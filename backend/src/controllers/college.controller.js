@@ -1,41 +1,88 @@
+
+
 import prisma from "../db/prisma.js";
-import bcrypt from "bcrypt"
+import bcrypt from "bcrypt";
 
-export const registerCollege = async (req, res) => {
+export const createCollege = async(req, res) => {
     try {
-        const { name, email, password } = req.body;
-        if (!name || !email || !password) {
-            return res.status(400).json({ error: 'Name, email, and password are required.' });
+        const {name, email, password} = req.body;
+        const trimmedName = typeof name === 'string'? name.trim():'';
+        const trimmedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    
+        if (!trimmedName || !trimmedEmail || !password) {
+            return res.status(400).json({
+                msg: "name, email, password are mandatory"
+            })
         }
 
-        const existingCollege = await prisma.college.findUnique({
-            where: { email },
+        if (password.length < 6) {
+            return res.status(400).json({ error: "Password must be at least 6 characters." });
+        }
+    
+        const emailExist = await prisma.college.findUnique({
+            where: {email: trimmedEmail}
         });
-        if (existingCollege) {
-            return res.status(409).json({ error: 'A college with this email already exists.' });
+    
+        if(emailExist) {
+            return res.status(409).json({
+               error : "College with this mail already exists"
+            })
         }
-
-        const passwordHash = await bcrypt.hash(password, 10);
-
+        const hashedPassword = await bcrypt.hash(password, 10);
+    
         const newCollege = await prisma.college.create({
             data: {
-                name,
-                email,
-                passwordHash, 
+                name: trimmedName,
+                email: trimmedEmail,
+                passwordHash: hashedPassword,
             },
+            select: {
+                name: true,
+                id : true, 
+                email : true
+            }
+        })
+    
+        return res.status(201).json({
+            msg : "College created successfully",
+            college: newCollege
+        })
+    } catch (error) {
+        console.error("[createCollege]", error);
+        return res.status(500).json({
+            error: "Error creating the college",
+            message: error?.message || String(error),
+        });
+    }
+}
+
+export const registerCollege = createCollege;
+
+export const getColleges = async (req, res) => {
+    try {
+        const colleges = await prisma.college.findMany({
             select: {
                 id: true,
                 name: true,
                 email: true,
             },
+            orderBy: { name: "asc" },
         });
-
-        return res.status(201).json({
-            message: 'College registered successfully.',
-            college: newCollege,
+        return res.status(200).json({ colleges });
+    } catch (error) {
+        console.error("[getColleges]", error);
+        return res.status(500).json({
+            error: "Error happened while fetching colleges",
+            message: error?.message || String(error),
         });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Internal server error.' });
     }
 };
+
+
+
+
+
+
+
+
+

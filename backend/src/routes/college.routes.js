@@ -1,9 +1,12 @@
-import  { Router } from 'express'
-import { registerCollege } from '../controllers/college.controller.js';
-const collegeRouter=Router();
 
 
+import { Router } from "express";
+import { createCollege, registerCollege, getColleges } from "../controllers/college.controller.js";
 
-collegeRouter.post('/register',registerCollege)
+const collegeRouter = Router();
 
-export default collegeRouter
+collegeRouter.get("/", getColleges);           // GET  /api/college/
+collegeRouter.post("/register", registerCollege);  // POST /api/college/register
+collegeRouter.post("/create", createCollege);       // POST /api/college/create
+
+export default collegeRouter;

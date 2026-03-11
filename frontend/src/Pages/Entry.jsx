@@ -83,7 +83,7 @@ export default function Entry() {
         <div className="flex gap-8">
          {/* College */}
          <button
-           onClick={() => navigate("/homepage")}
+           onClick={() => navigate("/college-dashboard")}
            className="border-4 border-dotted border-purple-400 px-10 py-5 rounded-3xl bg-purple-100 font-bold text-purple-700 text-lg shadow-lg hover:bg-purple-200 hover:scale-110 hover:rotate-1 transition-all duration-300"
          >
            College
