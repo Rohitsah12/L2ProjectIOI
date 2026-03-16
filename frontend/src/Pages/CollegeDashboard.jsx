@@ -2,10 +2,21 @@
 
 import { MdGroups2 } from "react-icons/md";
 import { GiTeacher } from "react-icons/gi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function CollegeDashboard() {
   const navigate = useNavigate();
+  const { collegeId } = useParams();
+
+  const goToBatchSetting = () => {
+    if (collegeId) navigate(`/batch-setting/${collegeId}`);
+    else navigate("/batch-setting");
+  };
+
+  const goToTeacherSetting = () => {
+    if (collegeId) navigate(`/teacher-setting/${collegeId}`);
+    else navigate("/teacher-setting");
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
@@ -24,7 +35,7 @@ export default function CollegeDashboard() {
           
           {/* Manage Batches Card */}
           <div
-            onClick={() => navigate("/batch-setting")}
+            onClick={goToBatchSetting}
             className="cursor-pointer rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-gray-200 p-6 shadow-sm hover:shadow-md transition hover:scale-[1.02]"
           >
             <div className="grid grid-cols-[3fr_9fr] gap-4 items-center">
@@ -41,7 +52,7 @@ export default function CollegeDashboard() {
 
           {/* Manage Teachers Card */}
           <div
-          onClick={()=>navigate("/teacher-setting")}
+          onClick={goToTeacherSetting}
             className="cursor-pointer rounded-2xl bg-gradient-to-br from-teal-50 to-teal-100 border border-gray-200 p-6 shadow-sm hover:shadow-md transition hover:scale-[1.02]"
           >
             <div className="grid grid-cols-[3fr_9fr] gap-4 items-center">

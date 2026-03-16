@@ -1,198 +1,226 @@
-import prisma from '../db/prisma.js';
-import bcrypt from 'bcrypt';
 
 
-export const addTeacher = async (req, res) => {
-  try {
-    const collegeId = req.user?.id;
-    if (!collegeId) {
-      return res.status(401).json({ error: 'College authentication failed.' });
-    }
 
-    let teachers = req.body;
-    if (!Array.isArray(teachers)) {
-      teachers = [teachers];
-    }
 
-    const createdTeachers = [];
 
-    for (const teacher of teachers) {
-      const { name, email, password, teacherEnrollmentId, batches } = teacher;
+import prisma from "../db/prisma";
+import bcrypt from "bcrypt";
 
-      if (!name || !email || !password || !teacherEnrollmentId) {
-        return res.status(400).json({ error: 'Name, email, password, and teacherEnrollmentId are required for each teacher.' });
-      }
+// All response messages use "msg" key (standardised; was mixed error/message before).
 
-      const existingTeacher = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { email },
-            { teacherEnrollmentId }
-          ]
-        },
-      });
-      if (existingTeacher) {
-        return res.status(409).json({ error: `Teacher with email ${email} or enrollment ID ${teacherEnrollmentId} already exists.` });
-      }
-
-      if (batches && batches.length > 0) {
-        const validBatches = await prisma.batch.findMany({
-          where: {
-            id: { in: batches },
-            collegeId,
-          },
-          select: { id: true },
-        });
-        if (validBatches.length !== batches.length) {
-          return res.status(400).json({ error: 'One or more batch IDs are invalid or do not belong to your college.' });
-        }
-      }
-
-      const passwordHash = await bcrypt.hash(password, 10);
-
-      const createdTeacher = await prisma.user.create({
-        data: {
-          name,
-          email,
-          passwordHash,
-          role: 'TEACHER',
-          collegeId,
-          teacherEnrollmentId,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          collegeId: true,
-          teacherEnrollmentId: true,
-        },
-      });
-
-      if (batches && batches.length > 0) {
-        const teacherBatchData = batches.map(batchId => ({
-          teacherId: createdTeacher.id,
-          batchId,
-        }));
-        await prisma.teacherBatch.createMany({
-          data: teacherBatchData,
-          skipDuplicates: true,
-        });
-      }
-
-      createdTeachers.push(createdTeacher);
-    }
-
-    return res.status(201).json({
-      message: `${createdTeachers.length} teacher(s) added successfully.`,
-      teachers: createdTeachers,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal server error.' });
+export const getTeachers = async(req, res) => {
+  const collegeId = req.user?.id;
+  if(!collegeId) {
+    return res.status(401).json({
+      msg : "Authentication Failed"
+    })
   }
-};
+
+  try {
+    // CHANGED: was prisma.teacher.findMany but schema has User model (teachers are User with role TEACHER). Also added id to select for frontend keys/navigation.
+    const teachers = await prisma.user.findMany({
+      where: { collegeId, role: "TEACHER" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        collegeId: true,
+        teacherEnrollmentId: true,
+      },
+    })
+    return res.status(201).json({msg : "Teacher fetched successfully!", teachers})
+    
+  } catch (error) {
+     return res.status(500).json({msg : "Error in fetching teacher"});
+    }
+}
+
+export const addTeacher = async(req, res) =>  {
+  const collegeId = req.user?.id;
+  if(!collegeId) {
+   return res.status(401).json({
+     msg : "Authentication Failed"
+   })
+ }
+
+  const {name, email, password, teacherEnrollmentId } = req.body;
+
+  if (!name || !email || !password || !teacherEnrollmentId) {
+      return res.status(400).json({ msg: 'Name, email, password, and teacherEnrollmentId are required.' });
+    }
+   try {
+
+
+    const isExisting = await prisma.user.findFirst({
+      where: {
+        OR:[
+          {teacherEnrollmentId}, 
+          {email}
+        ]
+      }
+    })
+
+    if(isExisting) {
+            return res.status(409).json({ msg: `Teacher with email ${email} or enrollment ID ${teacherEnrollmentId} already exists.` });
+
+
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const teacher = await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash: hashedPassword,
+        teacherEnrollmentId,
+        role: 'TEACHER',
+        collegeId,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        collegeId: true,
+        teacherEnrollmentId: true,
+        role: true,
+      },
+    });
+    return res.status(201).json({
+      msg: "Teacher created successfully!",
+      teacher,
+    });
+    
+  } catch (error) {
+     return res.status(500).json({msg : "Error in creating teacher"});
+    }
+}
+
+
+export const getTeacherById= async(req, res) => {
+  const collegeId = req.user?.id;
+  
+  if(!collegeId) {
+    return res.status(401).json({
+      msg : "Authentication Failed"
+    })
+  }
+  const teacherId = req.params.id;
+
+  try {
+    const teacher = await prisma.user.findFirst({
+      where: { id: teacherId, collegeId, role: "TEACHER" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        teacherEnrollmentId: true,
+        collegeId: true,
+      },
+    });
+
+    if (!teacher) {
+      return res.status(404).json({ msg: 'Teacher not found.' });
+    }
+
+    const teacherBatch = await prisma.teacherBatch.findMany({
+      where: { teacherId },
+      select: { batchId: true },
+    });
+    const batches = teacherBatch.map((tb) => tb.batchId);
+
+    return res.status(200).json({
+      msg: "Fetched teacher by id",
+      teacher: { ...teacher, batches },
+    });
+
+
+     
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ msg: 'Internal server error.' });
+    
+  }
+}
 
 
 export const updateTeacherById = async (req, res) => {
   try {
     const collegeId = req.user?.id;
-    const teacherId = req.params.id;
-    const { name, email, password, teacherEnrollmentId, batches } = req.body;
+    const teacherId = req.params?.id;
+    const { name, email, teacherEnrollmentId, batches, password } = req.body;
 
+    // Mistake: no check for missing collegeId/teacherId. Corrected: return 401/400 so auth and params are validated.
     if (!collegeId) {
-      return res.status(401).json({ error: 'College authentication failed.' });
+      return res.status(401).json({ msg: 'College authentication failed.' });
+    }
+    if (!teacherId) {
+      return res.status(400).json({ msg: 'Teacher ID is required.' });
     }
 
-    const teacher = await prisma.user.findUnique({
-      where: { id: teacherId },
+    // Mistake: where: { collegeId, teacherId, role } – User has id, not teacherId; and if(!teacher) was empty. Corrected: where: { id: teacherId, collegeId, role }, and return 404 when not found.
+    const teacher = await prisma.user.findFirst({
+      where: { id: teacherId, collegeId, role: 'TEACHER' },
+      select: { id: true },
     });
-    if (!teacher || teacher.collegeId !== collegeId || teacher.role !== 'TEACHER') {
-      return res.status(404).json({ error: 'Teacher not found or access denied.' });
+    if (!teacher) {
+      return res.status(404).json({ msg: 'Teacher not found or access denied.' });
     }
 
+    // Mistake: hashedPassword = bcrypt.hash(password) (no await, no salt); updatedUser.password = updatedPassword (undefined, and User has passwordHash). Corrected: only set fields when provided; use updateData.passwordHash = await bcrypt.hash(password, 10).
     const updateData = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (teacherEnrollmentId) updateData.teacherEnrollmentId = teacherEnrollmentId;
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (teacherEnrollmentId !== undefined) updateData.teacherEnrollmentId = teacherEnrollmentId;
     if (password) {
       updateData.passwordHash = await bcrypt.hash(password, 10);
     }
 
-    if (email || teacherEnrollmentId) {
+    // Mistake: AND: { ... } (object; Prisma expects array); OR had wrong spread { ...expr }; findMany then if(faultyUpdate) and return with no body. Corrected: AND: [ ... ], OR: [ ...(email !== undefined ? [{ email }] : []), ... ]; findFirst; if(conflictTeacher) return 409 with message.
+    if (email !== undefined || teacherEnrollmentId !== undefined) {
       const conflictTeacher = await prisma.user.findFirst({
         where: {
           AND: [
             { id: { not: teacherId } },
             {
               OR: [
-                { email: email || undefined },
-                { teacherEnrollmentId: teacherEnrollmentId || undefined },
+                ...(email !== undefined ? [{ email }] : []),
+                ...(teacherEnrollmentId !== undefined ? [{ teacherEnrollmentId }] : []),
               ],
             },
           ],
         },
       });
       if (conflictTeacher) {
-        return res.status(409).json({ error: 'Email or teacherEnrollmentId already in use by another teacher.' });
+        return res.status(409).json({ msg: 'Email or teacher enrollment ID already in use by another user.' });
       }
     }
 
+    // Mistake: where: { teacherId } (User PK is id); data: updatedUser (had .password). Corrected: where: { id: teacherId }, data: updateData with valid fields only.
     const updatedTeacher = await prisma.user.update({
       where: { id: teacherId },
       data: updateData,
       select: { id: true, name: true, email: true, role: true, collegeId: true, teacherEnrollmentId: true },
     });
 
+    // Mistake: findFirst({ where: { collegeId } }) gives one batch; batches.map(batch => batch.batchId in allBatch) wrong (batches are IDs; allBatch one object); return res. incomplete. Corrected: findMany({ where: { id: { in: batches }, collegeId } }); validBatches.length !== batches.length then 400.
     if (Array.isArray(batches)) {
-      // Validate batches belong to college
       const validBatches = await prisma.batch.findMany({
         where: { id: { in: batches }, collegeId },
         select: { id: true },
       });
       if (validBatches.length !== batches.length) {
-        return res.status(400).json({ error: 'One or more batch IDs are invalid or do not belong to your college.' });
+        return res.status(400).json({ msg: 'One or more batch IDs are invalid or do not belong to your college.' });
       }
+      // Mistake: allBatch.map(...) (allBatch single object); shape { batchId, collegeId } wrong for TeacherBatch; createMany without await. Corrected: batches.map(batchId => ({ teacherId, batchId })); await createMany.
       await prisma.teacherBatch.deleteMany({ where: { teacherId } });
-      const teacherBatchData = batches.map(batchId => ({ teacherId, batchId }));
+      const teacherBatchData = batches.map((batchId) => ({ teacherId, batchId }));
       await prisma.teacherBatch.createMany({ data: teacherBatchData, skipDuplicates: true });
     }
 
-    return res.status(200).json({ message: 'Teacher updated successfully.', teacher: updatedTeacher });
+    // Mistake: no success return; empty catch. Corrected: return 200 with teacher; catch logs and returns 500.
+    return res.status(200).json({ msg: 'Teacher updated successfully.', teacher: updatedTeacher });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
-};
-
-
-export const deleteTeacherById = async (req, res) => {
-  try {
-    const collegeId = req.user?.id;
-    const teacherId = req.params.id;
-
-    if (!collegeId) {
-      return res.status(401).json({ error: 'College authentication failed.' });
-    }
-
-    const teacher = await prisma.user.findUnique({
-      where: { id: teacherId },
-    });
-    if (!teacher || teacher.collegeId !== collegeId || teacher.role !== 'TEACHER') {
-      return res.status(404).json({ error: 'Teacher not found or access denied.' });
-    }
-
-    await prisma.teacherBatch.deleteMany({
-      where: { teacherId },
-    });
-
-    await prisma.user.delete({
-      where: { id: teacherId },
-    });
-
-    return res.status(200).json({ message: 'Teacher deleted successfully.' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-};
+}

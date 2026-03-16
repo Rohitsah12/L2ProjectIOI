@@ -1,11 +1,13 @@
 import prisma from "../db/prisma.js";
 
+// CHANGED: All response messages use "msg" key (was "error"/"message" before; standardised).
+
 export const createPlatform = async (req, res) => {
   try {
     const { name } = req.body;
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
-      return res.status(400).json({ error: 'Platform name is required and must be a non-empty string.' });
+      return res.status(400).json({ msg: 'Platform name is required and must be a non-empty string.' });
     }
 
     const platformName = name.trim().toLowerCase();
@@ -15,7 +17,7 @@ export const createPlatform = async (req, res) => {
     });
 
     if (existingPlatform) {
-      return res.status(409).json({ error: 'Platform with this name already exists.' });
+      return res.status(409).json({ msg: 'Platform with this name already exists.' });
     }
 
     const newPlatform = await prisma.platform.create({
@@ -25,12 +27,12 @@ export const createPlatform = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: 'Platform created successfully.',
+      msg: 'Platform created successfully.',
       platform: newPlatform,
     });
   } catch (error) {
     console.error('Error creating platform:', error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
 };
 
@@ -43,6 +45,6 @@ export const getAllPlatforms = async (req, res) => {
     res.status(200).json({ platforms });
   } catch (error) {
     console.error('Error in getAllPlatforms:', error);
-    res.status(500).json({ error: 'Internal server error.' });
+    res.status(500).json({ msg: 'Internal server error.' });
   }
 };

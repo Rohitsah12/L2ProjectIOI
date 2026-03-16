@@ -3,6 +3,8 @@
 import prisma from "../db/prisma.js";
 import bcrypt from "bcrypt";
 
+// CHANGED: All response messages use "msg" key (was "error"/"message"; catch blocks now return single msg).
+
 export const createCollege = async(req, res) => {
     try {
         const {name, email, password} = req.body;
@@ -16,7 +18,7 @@ export const createCollege = async(req, res) => {
         }
 
         if (password.length < 6) {
-            return res.status(400).json({ error: "Password must be at least 6 characters." });
+            return res.status(400).json({ msg: "Password must be at least 6 characters." });
         }
     
         const emailExist = await prisma.college.findUnique({
@@ -25,7 +27,7 @@ export const createCollege = async(req, res) => {
     
         if(emailExist) {
             return res.status(409).json({
-               error : "College with this mail already exists"
+               msg : "College with this mail already exists"
             })
         }
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -50,8 +52,7 @@ export const createCollege = async(req, res) => {
     } catch (error) {
         console.error("[createCollege]", error);
         return res.status(500).json({
-            error: "Error creating the college",
-            message: error?.message || String(error),
+            msg: error?.message || "Error creating the college",
         });
     }
 }
@@ -72,8 +73,7 @@ export const getColleges = async (req, res) => {
     } catch (error) {
         console.error("[getColleges]", error);
         return res.status(500).json({
-            error: "Error happened while fetching colleges",
-            message: error?.message || String(error),
+            msg: error?.message || "Error happened while fetching colleges",
         });
     }
 };

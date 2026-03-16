@@ -116,7 +116,7 @@ export default function CollegeSettingL() {
         {!fetchError && colleges.map((college, index) => (
           <motion.div
             key={college.id}
-            onClick={() => navigate("/college-dashboard")}
+            onClick={() => navigate(`/college-dashboard/${college.id}`)}
             whileHover={{ scale: 1.03 }}
             className={`relative bg-gradient-to-br ${gradients[index % gradients.length]} text-gray-800 border border-gray-200 rounded-2xl p-5 hover:shadow-md cursor-pointer transition opacity-0 translate-y-4 animate-fadeInUp w-3xs min-w-[200px]`}
           >

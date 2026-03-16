@@ -1,24 +1,26 @@
 import prisma from "../db/prisma.js";
-import bcrypt from "bcrypt"
+import bcrypt from "bcrypt";
+
+// CHANGED: All response messages use "msg" key (was "error"/"message" before; standardised).
 
 export const addStudents = async (req, res) => {
   try {
     const collegeId = req.user?.id;
     if (!collegeId) {
-      return res.status(401).json({ error: 'College authentication failed.' });
+      return res.status(401).json({ msg: 'College authentication failed.' });
     }
 
     let students = req.body.students;
     const batchId = req.body.batchId; 
 
     if (!students || !Array.isArray(students) || students.length === 0) {
-      return res.status(400).json({ error: 'Students array is required and cannot be empty.' });
+      return res.status(400).json({ msg: 'Students array is required and cannot be empty.' });
     }
 
     if (batchId) {
       const batch = await prisma.batch.findUnique({ where: { id: batchId } });
       if (!batch || batch.collegeId !== collegeId) {
-        return res.status(400).json({ error: 'Invalid batch ID or batch does not belong to your college.' });
+        return res.status(400).json({ msg: 'Invalid batch ID or batch does not belong to your college.' });
       }
     }
 
@@ -36,7 +38,7 @@ export const addStudents = async (req, res) => {
 
       if (!name || !email || !password || !studentEnrollmentId) {
         return res.status(400).json({
-          error: 'Name, email, password, and studentEnrollmentId are required for each student.',
+          msg: 'Name, email, password, and studentEnrollmentId are required for each student.',
         });
       }
 
@@ -47,7 +49,7 @@ export const addStudents = async (req, res) => {
       });
       if (existingUser) {
         return res.status(409).json({
-          error: `User with email ${email} or studentEnrollmentId ${studentEnrollmentId} already exists.`,
+          msg: `User with email ${email} or studentEnrollmentId ${studentEnrollmentId} already exists.`,
         });
       }
 
@@ -89,7 +91,7 @@ export const addStudents = async (req, res) => {
 
         if (validBatches.length !== batchesToAssign.length) {
           return res.status(400).json({
-            error:
+            msg:
               'One or more batch IDs are invalid or do not belong to your college.',
           });
         }
@@ -109,7 +111,7 @@ export const addStudents = async (req, res) => {
         for (const { platformName, handle } of platformAccounts) {
           if (!platformName || !handle) {
             return res.status(400).json({
-              error:
+              msg:
                 'Each platform account must have both platformName and handle.',
             });
           }
@@ -149,12 +151,12 @@ export const addStudents = async (req, res) => {
     }
 
     return res.status(201).json({
-      message: `${createdStudents.length} student(s) added successfully.`,
+      msg: `${createdStudents.length} student(s) added successfully.`,
       students: createdStudents,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
 };
 
@@ -179,7 +181,7 @@ export const updateStudentById = async (req, res) => {
 
     const student = await verifyStudentOwnership(studentId, collegeId);
     if (!student) {
-      return res.status(404).json({ error: 'Student not found or access denied.' });
+      return res.status(404).json({ msg: 'Student not found or access denied.' });
     }
 
     if (email || studentEnrollmentId) {
@@ -197,7 +199,7 @@ export const updateStudentById = async (req, res) => {
         },
       });
       if (conflict) {
-        return res.status(409).json({ error: 'Email or studentEnrollmentId already in use.' });
+        return res.status(409).json({ msg: 'Email or studentEnrollmentId already in use.' });
       }
     }
 
@@ -227,7 +229,7 @@ export const updateStudentById = async (req, res) => {
         select: { id: true },
       });
       if (validBatches.length !== batchIds.length) {
-        return res.status(400).json({ error: 'One or more batch IDs are invalid or not owned by your college.' });
+        return res.status(400).json({ msg: 'One or more batch IDs are invalid or not owned by your college.' });
       }
 
       await prisma.studentBatch.deleteMany({ where: { studentId } });
@@ -253,10 +255,10 @@ export const updateStudentById = async (req, res) => {
       }
     }
 
-    return res.status(200).json({ message: 'Student updated successfully.', student: updatedStudent });
+    return res.status(200).json({ msg: 'Student updated successfully.', student: updatedStudent });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
 };
 
@@ -267,7 +269,7 @@ export const deleteStudentById = async (req, res) => {
 
     const student = await verifyStudentOwnership(studentId, collegeId);
     if (!student) {
-      return res.status(404).json({ error: 'Student not found or access denied.' });
+      return res.status(404).json({ msg: 'Student not found or access denied.' });
     }
 
     await prisma.studentBatch.deleteMany({ where: { studentId } });
@@ -275,10 +277,10 @@ export const deleteStudentById = async (req, res) => {
 
     await prisma.user.delete({ where: { id: studentId } });
 
-    return res.status(200).json({ message: 'Student deleted successfully.' });
+    return res.status(200).json({ msg: 'Student deleted successfully.' });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
 };
 
@@ -313,7 +315,7 @@ export const getAllStudents = async (req, res) => {
     return res.status(200).json({ students });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
 };
 
@@ -324,7 +326,7 @@ export const getAllStudentsByBatch = async (req, res) => {
 
     const batch = await prisma.batch.findUnique({ where: { id: batchId } });
     if (!batch || batch.collegeId !== collegeId) {
-      return res.status(404).json({ error: 'Batch not found or access denied.' });
+      return res.status(404).json({ msg: 'Batch not found or access denied.' });
     }
 
     const studentBatches = await prisma.studentBatch.findMany({
@@ -356,7 +358,7 @@ export const getAllStudentsByBatch = async (req, res) => {
     return res.status(200).json({ students });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
 };
 
@@ -395,12 +397,12 @@ export const getStudentById = async (req, res) => {
     });
 
     if (!student || student.collegeId !== collegeId || student.role !== 'STUDENT') {
-      return res.status(404).json({ error: 'Student not found or access denied.' });
+      return res.status(404).json({ msg: 'Student not found or access denied.' });
     }
 
     return res.status(200).json({ student });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ msg: 'Internal server error.' });
   }
 };
