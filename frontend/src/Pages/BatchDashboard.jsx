@@ -8,7 +8,7 @@ import {
   School,
 } from "lucide-react";
 
-export default function Sot23B1() {
+export default function BatchDashboard() {
   return (
     <div className="flex h-screen bg-gray-50">
       <aside className="min-h-screen w-25 bg-white shadow-md flex flex-col justify-start items-center p-4">

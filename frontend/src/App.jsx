@@ -14,10 +14,10 @@ import CollegeSetting from './Pages/CollegeSetting'
 import Entry from './Pages/Entry';
 import BatchSetting from './Pages/BatchSetting'
 import TeacherSetting from './Pages/TeacherSetting'
-import Sot23B1 from './Pages/Sot23b1'
+import Sot23B1 from './Pages/BatchDashboard'
 import Dashboard from './Pages/Sot23b1Dashboard';
 import Students from './Pages/Sot23b1Students';
-import Teachers from './Pages/Sot23b1Teachers';
+import Teachers from './Pages/BatchTeachers';
 import Content from './Pages/Sot23b1Content';
 import TeacherEnd from './Pages/TeacherEnd'
 import TeacherEndBatch  from './Pages/TeacherEndBatch'
