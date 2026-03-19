@@ -46,17 +46,11 @@ function InstitutionLogin() {
 
       const res = await api.post("/auth/login", payload);
       const { user, message } = res.data;
-      console.log(user , message);
-      
 
       if (user?.role) {
         Cookies.set("role", user.role, { expires: 7 });
         Cookies.set("loggedInUser", user.name, { expires: 7 });
-
         handleSuccess(message || "Login Successfully");
-        console.log("success");
-        
-
         redirectByRole(user.role, navigate);
       } else {
         handleError(message || "Login failed");

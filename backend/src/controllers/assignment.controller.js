@@ -1,5 +1,7 @@
 import prisma from "../db/prisma.js";
 
+// CHANGED: All response messages use "msg" key (was "error"/"message" before; standardised).
+
 export const createTopic = async (req, res) => {
   try {
     const { name } = req.body;
@@ -7,7 +9,7 @@ export const createTopic = async (req, res) => {
     if (!name) {
       return res
         .status(400)
-        .json({ error: "Name is required and must be non-empty." });
+        .json({ msg: "Name is required and must be non-empty." });
     }
     name=name.trim().toLowerCase()
     const topic = await prisma.topic.create({
@@ -19,14 +21,14 @@ export const createTopic = async (req, res) => {
 
     res.status(201).json(topic);
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 export const getAllTopics = async (req, res) => {
   try {
     const teacherId = req.user?.id;
     if (!teacherId) {
-      return res.status(401).json({ error: "Teacher is not authenticated" });  // Use 401 Unauthorized
+      return res.status(401).json({ msg: "Teacher is not authenticated" });  // Use 401 Unauthorized
     }
 
     const allTopics = await prisma.topic.findMany({
@@ -43,7 +45,7 @@ export const getAllTopics = async (req, res) => {
     return res.status(200).json({ topics: allTopics });
   } catch (error) {
     console.error("Error in getAllTopics:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ msg: "Internal server error" });
   }
 };
 export const createSubtopic = async (req, res) => {
@@ -51,7 +53,7 @@ export const createSubtopic = async (req, res) => {
     let { name, topic_id } = req.body;
 
     if (!name || !topic_id) {
-      return res.status(400).json({ error: 'Both name and topic_id are required.' });
+      return res.status(400).json({ msg: 'Both name and topic_id are required.' });
     }
 
     name = name.trim().toLowerCase();
@@ -59,7 +61,7 @@ export const createSubtopic = async (req, res) => {
 
     const topic = await prisma.topic.findUnique({ where: { id: topic_id } });
     if (!topic || topic.createdBy !== req.user.id) {
-      return res.status(403).json({ error: 'Topic not found or unauthorized.' });
+      return res.status(403).json({ msg: 'Topic not found or unauthorized.' });
     }
 
     const subtopic = await prisma.subtopic.create({
@@ -73,14 +75,14 @@ export const createSubtopic = async (req, res) => {
     res.status(201).json(subtopic);
   } catch (error) {
     console.error("Error in createSubtopic:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 export const getAllSubtopics = async (req, res) => {
   try {
     const teacherId = req.user?.id;
     if (!teacherId) {
-      return res.status(401).json({ error: "Teacher is not authenticated" });
+      return res.status(401).json({ msg: "Teacher is not authenticated" });
     }
 
     const { topic_id } = req.params;
@@ -103,7 +105,7 @@ export const getAllSubtopics = async (req, res) => {
     return res.status(200).json({ subtopics });
   } catch (error) {
     console.error("Error in getAllSubtopics:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ msg: "Internal server error" });
   }
 };
 export const createProblem = async (req, res) => {
@@ -118,7 +120,7 @@ export const createProblem = async (req, res) => {
       !topic_id ||
       !subtopic_id
     ) {
-      return res.status(400).json({ error: 'All fields are required.' });
+      return res.status(400).json({ msg: 'All fields are required.' });
     }
 
     title = title.trim().toLowerCase();
@@ -129,12 +131,12 @@ export const createProblem = async (req, res) => {
     subtopic_id = subtopic_id.trim();
 
     if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
-      return res.status(400).json({ error: 'Difficulty must be one of EASY, MEDIUM, HARD.' });
+      return res.status(400).json({ msg: 'Difficulty must be one of EASY, MEDIUM, HARD.' });
     }
 
     const topic = await prisma.topic.findUnique({ where: { id: topic_id } });
     if (!topic || topic.createdBy !== req.user.id) {
-      return res.status(403).json({ error: 'Topic not found or unauthorized.' });
+      return res.status(403).json({ msg: 'Topic not found or unauthorized.' });
     }
 
     const subtopic = await prisma.subtopic.findUnique({ where: { id: subtopic_id } });
@@ -143,12 +145,12 @@ export const createProblem = async (req, res) => {
       subtopic.createdBy !== req.user.id ||
       subtopic.topicId !== topic_id
     ) {
-      return res.status(403).json({ error: 'Subtopic not found, unauthorized, or does not belong to the topic.' });
+      return res.status(403).json({ msg: 'Subtopic not found, unauthorized, or does not belong to the topic.' });
     }
 
     const platform = await prisma.platform.findUnique({ where: { id: platform_id } });
     if (!platform) {
-      return res.status(400).json({ error: 'Platform does not exist.' });
+      return res.status(400).json({ msg: 'Platform does not exist.' });
     }
 
     const problem = await prisma.problem.create({
@@ -166,7 +168,7 @@ export const createProblem = async (req, res) => {
     res.status(201).json(problem);
   } catch (error) {
     console.error("Error in createProblem:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ msg: "Internal server error" });
   }
 };
 
@@ -174,7 +176,7 @@ export const getAllProblems = async (req, res) => {
   try {
     const teacherId = req.user?.id;
     if (!teacherId) {
-      return res.status(401).json({ error: "Teacher is not authenticated" });
+      return res.status(401).json({ msg: "Teacher is not authenticated" });
     }
 
     // Optional filters by query parameters
@@ -209,7 +211,7 @@ export const getAllProblems = async (req, res) => {
     return res.status(200).json({ problems });
   } catch (error) {
     console.error("Error in getAllProblems:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ msg: "Internal server error" });
   }
 };
 
@@ -217,13 +219,13 @@ export const assignHomework = async (req, res) => {
   try {
     const teacherId = req.user?.id;
     if (!teacherId) {
-      return res.status(401).json({ error: "Teacher authentication failed." });
+      return res.status(401).json({ msg: "Teacher authentication failed." });
     }
 
     let { batch_id, problem_id, assignedDate } = req.body;
 
     if (!batch_id || !problem_id) {
-      return res.status(400).json({ error: "batch_id and problem_id are required." });
+      return res.status(400).json({ msg: "batch_id and problem_id are required." });
     }
 
     batch_id = batch_id.trim();
@@ -233,7 +235,7 @@ export const assignHomework = async (req, res) => {
     if (assignedDate) {
       assignedDateObj = new Date(assignedDate);
       if (isNaN(assignedDateObj.getTime())) {
-        return res.status(400).json({ error: "Invalid assignedDate format." });
+        return res.status(400).json({ msg: "Invalid assignedDate format." });
       }
     } else {
       assignedDateObj = new Date();
@@ -254,7 +256,7 @@ export const assignHomework = async (req, res) => {
     });
 
     if (!batch) {
-      return res.status(403).json({ error: "Unauthorized or invalid batch." });
+      return res.status(403).json({ msg: "Unauthorized or invalid batch." });
     }
 
     const problem = await prisma.problem.findUnique({
@@ -262,7 +264,7 @@ export const assignHomework = async (req, res) => {
     });
 
     if (!problem || problem.addedBy !== teacherId) {
-      return res.status(403).json({ error: "Problem not found or unauthorized." });
+      return res.status(403).json({ msg: "Problem not found or unauthorized." });
     }
 
     let problemAssignment = await prisma.problemAssignment.findFirst({
@@ -323,7 +325,7 @@ export const assignHomework = async (req, res) => {
     }
 
     return res.status(201).json({
-      message: `Problem assigned to batch with ${assigned.length} new student(s).`,
+      msg: `Problem assigned to batch with ${assigned.length} new student(s).`,
       assignmentId: problemAssignment.id,
       assignedStudents: assigned,
       alreadyAssignedStudents: alreadyAssigned,
@@ -332,7 +334,7 @@ export const assignHomework = async (req, res) => {
 
   } catch (error) {
     console.error("Error in assignHomework:", error);
-    return res.status(500).json({ error: "Internal server error." });
+    return res.status(500).json({ msg: "Internal server error." });
   }
 };
 

@@ -9,13 +9,15 @@ import ProtectedRoute from './Components/ProtectedRoute'
 import StudentDashboard from './Pages/StudentDashboard'
 import TeacherDashboard from './Pages/TeacherDashboard'
 import CollegeDashboard from './Pages/CollegeDashboard'
+import CollegeSetting from './Pages/CollegeSetting'
+
 import Entry from './Pages/Entry';
 import BatchSetting from './Pages/BatchSetting'
 import TeacherSetting from './Pages/TeacherSetting'
-import Sot23B1 from './Pages/Sot23b1'
+import BatchSideLayout from './Pages/BatchSideLayout'
 import Dashboard from './Pages/Sot23b1Dashboard';
 import Students from './Pages/Sot23b1Students';
-import Teachers from './Pages/Sot23b1Teachers';
+import Teachers from './Pages/BatchTeachers';
 import Content from './Pages/Sot23b1Content';
 import TeacherEnd from './Pages/TeacherEnd'
 import TeacherEndBatch  from './Pages/TeacherEndBatch'
@@ -44,7 +46,7 @@ function App() {
         <Route path='/homepage' element={<Homepage/>}/>
         <Route path='/student/login' element={<StudentLogin/>}/>
         <Route path='/teacher/login' element={<TeacherLogin/>}/>
-        <Route path="/institution/login" element={<InstitutionLogin />} />
+        <Route path="/college/login" element={<InstitutionLogin />} />
         {/* <Route
           path="/student-dashboard"
           element={<ProtectedRoute role="STUDENT" element={<StudentDashboard />} />}
@@ -56,11 +58,18 @@ function App() {
         
         <Route path='/entry' element={<Entry/>}></Route>
         <Route path='/college-dashboard' element={<CollegeDashboard/>}/>
-        <Route path='/batch-setting' element={<BatchSetting/>}></Route>
-        <Route path='/teacher-setting' element={<TeacherSetting/>}></Route>
+        <Route path='/college-dashboard/:collegeId' element={<CollegeDashboard/>}/>
+
+        
+        <Route path='/college-setting' element={<CollegeSetting/>}/>
+
+        <Route path='/batch-setting' element={<BatchSetting />} />
+        <Route path='/batch-setting/:collegeId' element={<BatchSetting />} />
+        <Route path='/teacher-setting' element={<TeacherSetting />} />
+        <Route path='/teacher-setting/:collegeId' element={<TeacherSetting />} />
         <Route path='/teacher/:id' element={<TeacherDetails/>}></Route>
 
-        <Route path='/batch/:batchId' element={<Sot23B1/>}>
+        <Route path='/batch/:batchId' element={<BatchSideLayout/>}>
           <Route index element={<Dashboard/>}/>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="students" element={<Students />} />
