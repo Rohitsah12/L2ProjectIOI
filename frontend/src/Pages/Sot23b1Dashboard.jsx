@@ -2,10 +2,41 @@
 
 
 import { Trophy, Activity } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import axios from "axios";
+
+
+const api = axios.create({
+  baseURL : "http://localhost:3000/api",
+  withCredentials : true,
+  headers: {"Content-Type" : "application/json"}
+})
 
 export default function Dashboard() {
-  const activeStudents = [
+
+  const [studentCount, setStudentCount] = useState(0);
+  const [teacherCount, setTeacherCount] = useState(0);
+
+    const {batchId} = useParams();
+
+    useEffect(()=>{
+      const fetchBatchStudent = async() => {
+        const res = await api.get(`/student/get/${batchId}`);
+        const students = res.data?.students ?? [];
+        setStudentCount(students.length);
+      } 
+       const fetchBatchTeacher = async() => {
+        const res = await api.get(`/batch/get/${batchId}/teachers`);
+        const teachers = res.data?.teachers ??[];
+        setTeacherCount(teachers.length);
+      } 
+      Promise.all([fetchBatchStudent(),fetchBatchTeacher()])
+     
+    }, [batchId])
+    const activeStudents = [
     { name: "Active", value: 70 },
     { name: "Inactive", value: 30 },
   ];
@@ -31,7 +62,7 @@ export default function Dashboard() {
       
       {/* KPI Section */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {[{ label: "Students", value: "124" }, { label: "Teachers", value: "2" }, { label: "Questions Assigned", value: "500" }, { label: "Topics Covered", value: "8" }, { label: "Active Students", value: "60%" }]
+        {[{ label: "Students", value: studentCount }, { label: "Teachers", value: teacherCount }, { label: "Questions Assigned", value: "500" }, { label: "Topics Covered", value: "8" }, { label: "Active Students", value: "60%" }]
           .map((item, idx) => (
           <div key={idx} className="bg-white rounded-2xl p-6 shadow hover:shadow-md transition">
             <div className="text-gray-500 text-sm font-medium tracking-tight">{item.label}</div>

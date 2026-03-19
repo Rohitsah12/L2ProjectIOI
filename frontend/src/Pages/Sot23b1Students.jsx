@@ -1,21 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2 } from "lucide-react";
+import axios from "axios"
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import {useParams} from "react-router-dom"
+import {handleSuccess, handleError} from "../utils/notification"
+
+
+const api = axios.create({
+  baseURL:"http://localhost:3000/api",
+  withCredentials: true,
+  headers:{"Content-Type": "application/json"}
+
+})
 
 export default function Students() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newStudent, setNewStudent] = useState({ id: "", name: "", email: "" });
+  const [newStudent, setNewStudent] = useState({  name: "", email: "" , password:""});
+  const [students, setStudents] = useState([]);
+  const [batchName, setBatchName] = useState("")
 
-  const [students, setStudents] = useState([
-    { id: "034", name: "Deepali", email: "deepali@sot.com" },
-    { id: "124", name: "Rohit", email: "rohit@sot.com" },
-  ]);
 
-  const handleAddStudent = (e) => {
+  const {batchId} = useParams();
+
+  useEffect(() => {
+    const fetchBatchStudent= async() =>{
+      const res = await api.get(`/student/get/${batchId}`);
+      setStudents(res.data?.students.map((s) => s.student) ?? []);
+      
+      setBatchName(res.data?.batchName);
+
+    }
+    fetchBatchStudent();
+
+  },[batchId])
+
+  const handleAddStudent = async(e) => {
     e.preventDefault();
-    setStudents([...students, newStudent]);
-    setNewStudent({ id: "", name: "", email: "" });
-    setIsModalOpen(false);
+    const res = await api.post(`/student/create`, {
+      batchId,
+      name:newStudent.name,
+      email:newStudent.email,
+      password: newStudent.password,
+     });
+     const student = res.data.student;
+     
+     handleSuccess(res.data?.msg);
+     setStudents([...students, student]);
+     setNewStudent({ id: "", name: "", email: "" , password:""});
+     setIsModalOpen(false);
+
   };
 
   const handleRemoveStudent = (id) => {
@@ -26,7 +61,7 @@ export default function Students() {
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">SOT23B1 Students</h2>
+        <h2 className="text-2xl font-bold text-gray-800">{batchName} Students</h2>
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-blue-500 px-3 text-white py-1.5 rounded-xl hover:shadow hover:text-black hover:bg-white hover:transition"
@@ -106,16 +141,7 @@ export default function Students() {
                 <h3 className="text-lg font-semibold mb-4">Add New Student</h3>
 
                 <form onSubmit={handleAddStudent}>
-                  <input
-                    type="text"
-                    placeholder="ID"
-                    value={newStudent.id}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, id: e.target.value })
-                    }
-                    className="w-full px-3 py-2 mb-2 rounded-lg border"
-                    required
-                  />
+                  
 
                   <input
                     type="text"
@@ -134,6 +160,17 @@ export default function Students() {
                     value={newStudent.email}
                     onChange={(e) =>
                       setNewStudent({ ...newStudent, email: e.target.value })
+                    }
+                    className="w-full px-3 py-2 mb-2 rounded-lg border"
+                    required
+                  />
+
+                  <input
+                    type="password"
+                    placeholder="password"
+                    value={newStudent.password}
+                    onChange={(e) =>
+                      setNewStudent({ ...newStudent, password: e.target.value })
                     }
                     className="w-full px-3 py-2 mb-2 rounded-lg border"
                     required

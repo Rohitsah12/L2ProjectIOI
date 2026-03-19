@@ -14,7 +14,7 @@ import CollegeSetting from './Pages/CollegeSetting'
 import Entry from './Pages/Entry';
 import BatchSetting from './Pages/BatchSetting'
 import TeacherSetting from './Pages/TeacherSetting'
-import Sot23B1 from './Pages/BatchDashboard'
+import BatchSideLayout from './Pages/BatchSideLayout'
 import Dashboard from './Pages/Sot23b1Dashboard';
 import Students from './Pages/Sot23b1Students';
 import Teachers from './Pages/BatchTeachers';
@@ -69,7 +69,7 @@ function App() {
         <Route path='/teacher-setting/:collegeId' element={<TeacherSetting />} />
         <Route path='/teacher/:id' element={<TeacherDetails/>}></Route>
 
-        <Route path='/batch/:batchId' element={<Sot23B1/>}>
+        <Route path='/batch/:batchId' element={<BatchSideLayout/>}>
           <Route index element={<Dashboard/>}/>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="students" element={<Students />} />

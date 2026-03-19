@@ -7,8 +7,31 @@ import {
   LogOut,
   School,
 } from "lucide-react";
+import axios from "axios";
+import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+
+const api = axios.create({
+  baseURL: "http://localhost:3000/api",
+  withCredentials: true,
+  headers: {"Content-Type": "application/json"}
+})
 
 export default function BatchDashboard() {
+  const [batchName, setBatchName] = useState("");
+
+
+  const {batchId} = useParams();
+  useEffect(()=>{
+    async function fetchBatch(){
+      const res= await api.get(`/batch/get/${batchId}`)
+      const name =  res.data?.batch.name;
+       setBatchName(name);
+
+    }
+    fetchBatch()
+    
+  }, []);
   return (
     <div className="flex h-screen bg-gray-50">
       <aside className="min-h-screen w-25 bg-white shadow-md flex flex-col justify-start items-center p-4">
@@ -66,7 +89,7 @@ export default function BatchDashboard() {
       <div className="flex-1 flex flex-col">
         <header className="flex items-center justify-between bg-white px-6 py-4 shadow ">
           <div>
-            <div className="text-2xl font-extrabold z-10">SOT23B1</div>
+            <div className="text-2xl font-extrabold z-10">{batchName}</div>
           </div>
         </header>
         <main className="p-6 flex-1 overflow-y-auto">

@@ -52,7 +52,7 @@ export const createCollege = async(req, res) => {
     } catch (error) {
         console.error("[createCollege]", error);
         return res.status(500).json({
-            msg: error?.message || "Error creating the college",
+            msg:  "Error creating the college",
         });
     }
 }
