@@ -224,3 +224,37 @@ export const updateTeacherById = async (req, res) => {
     return res.status(500).json({ msg: 'Internal server error.' });
   }
 }
+
+export const getBatchByTeacherId = async (req, res) => {
+ try {
+   const teacherId = req.user?.id;
+  if(!teacherId) {
+      return res.status(401).json({ msg: "Teacher authentication failed." });
+  }
+
+  const batches = await prisma.teacherBatch.findMany( {
+    where : {teacherId},
+    include : {
+      batch:{
+        select:{
+          id : true,
+          name: true,
+        }
+
+      }
+    }
+  })
+
+  const plainBatches = batches.map((b)=>b.batch).filter(Boolean);
+
+  
+  return res.status(200).json({
+    msg : "Batch fetched successfully",
+    batches : plainBatches
+  })
+  
+ } catch (error) {
+    console.error("[getBatchByTeacherId]", error);
+    return res.status(500).json({ msg: "Error fetching batches." });
+  }
+};

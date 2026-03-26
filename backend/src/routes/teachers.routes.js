@@ -5,8 +5,8 @@ import {
   getTeachers,
   getTeacherById,
   updateTeacherById,
+  getBatchByTeacherId,
 } from "../controllers/teachers.controller.js";
-import { getBatchTeacher } from "../controllers/batch.controller.js";
 
 const teacherRouter = Router();
 
@@ -14,6 +14,6 @@ teacherRouter.get("/get", authDynamic, authCollege, getTeachers);
 teacherRouter.get("/get/:id", authDynamic, authCollege, getTeacherById);
 teacherRouter.post("/add", authDynamic, authCollege, addTeacher);
 teacherRouter.patch("/update/:id", authDynamic, authCollege, updateTeacherById);
-teacherRouter.get("/get-batch", authDynamic, authTeacher, getBatchTeacher);
+teacherRouter.get("/get-batch", authDynamic, authTeacher, getBatchByTeacherId);
 
 export default teacherRouter;

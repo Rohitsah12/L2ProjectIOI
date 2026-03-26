@@ -32,6 +32,7 @@ import Table from './Pages/Table'
 import Visual from './Pages/Visual'
 import StudentProfile from './Pages/StudentProfile';
 import TeacherDetails from './Pages/TeacherDetails';
+import TeacherWorkflowMock from './Pages/TeacherWorkflowMock';
 
 
 
@@ -55,6 +56,10 @@ function App() {
           path="/teacher-dashboard"
           element={<ProtectedRoute role="TEACHER" element={<TeacherDashboard />} />}
         /> */}
+        <Route
+          path="/teacher-dashboard"
+          element={<ProtectedRoute role="TEACHER" element={< TeacherEnd/>} />}
+        />
         
         <Route path='/entry' element={<Entry/>}></Route>
         <Route path='/college-dashboard' element={<CollegeDashboard/>}/>
@@ -67,7 +72,7 @@ function App() {
         <Route path='/batch-setting/:collegeId' element={<BatchSetting />} />
         <Route path='/teacher-setting' element={<TeacherSetting />} />
         <Route path='/teacher-setting/:collegeId' element={<TeacherSetting />} />
-        <Route path='/teacher/:id' element={<TeacherDetails/>}></Route>
+        <Route path='/teacher/teacherEdit/:id' element={<TeacherDetails/>}></Route>
 
         <Route path='/batch/:batchId' element={<BatchSideLayout/>}>
           <Route index element={<Dashboard/>}/>
@@ -79,7 +84,7 @@ function App() {
 
 
         <Route path='/teacherEnd' element={<TeacherEnd/>}></Route>
-        <Route path='/teacher/batch' element={<TeacherEndBatch />}>
+        <Route path='/teacher/:id' element={<TeacherEndBatch />}>
           <Route index element={<TeacherEndContent/>}/>
           <Route path='problemslist' element={<TeacherEndProblemList/>}/>
           <Route path='content' element={<TeacherEndContent/>}/>
@@ -97,6 +102,7 @@ function App() {
           </Route>
         </Route>
         <Route path="/teacher/problems" element={<TeacherProblemsPage />} />
+        <Route path="/teacher/workflow-mock" element={<TeacherWorkflowMock />} />
 
       <Route
         path="/student-dashboard"
