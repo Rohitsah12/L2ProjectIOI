@@ -1,340 +1,438 @@
+
+
 import prisma from "../db/prisma.js";
 
-// CHANGED: All response messages use "msg" key (was "error"/"message" before; standardised).
+export const createTopic = async(req, res) => {
+  const teacherId = req.user?.id;
 
-export const createTopic = async (req, res) => {
+  if(!teacherId) {
+    return res.status(401).json({msg : "Teacher Authentication Failed"});
+  }
+
+  const { name } = req.body;
+  const trimmedName = typeof name === "string" ? name.trim() : "";
+  if (!trimmedName) {
+    return res.status(400).json({ msg: "Name is required." });
+  }
+
   try {
-    const { name } = req.body;
-
-    if (!name) {
-      return res
-        .status(400)
-        .json({ msg: "Name is required and must be non-empty." });
-    }
-    name=name.trim().toLowerCase()
     const topic = await prisma.topic.create({
       data: {
-        name,
-        createdBy: req.user.id,
+        name: trimmedName,
+        createdBy : teacherId
       },
-    });
-
-    res.status(201).json(topic);
-  } catch (error) {
-    res.status(500).json({ msg: "Internal Server Error" });
-  }
-};
-export const getAllTopics = async (req, res) => {
-  try {
-    const teacherId = req.user?.id;
-    if (!teacherId) {
-      return res.status(401).json({ msg: "Teacher is not authenticated" });  // Use 401 Unauthorized
-    }
-
-    const allTopics = await prisma.topic.findMany({
-      where: {
-        createdBy: teacherId,  
-      },
-      select: {
-        id: true,         
-        name: true,
-      },
-      orderBy: { name: 'asc' },  
-    });
-
-    return res.status(200).json({ topics: allTopics });
-  } catch (error) {
-    console.error("Error in getAllTopics:", error);
-    return res.status(500).json({ msg: "Internal server error" });
-  }
-};
-export const createSubtopic = async (req, res) => {
-  try {
-    let { name, topic_id } = req.body;
-
-    if (!name || !topic_id) {
-      return res.status(400).json({ msg: 'Both name and topic_id are required.' });
-    }
-
-    name = name.trim().toLowerCase();
-    topic_id = topic_id.trim();
-
-    const topic = await prisma.topic.findUnique({ where: { id: topic_id } });
-    if (!topic || topic.createdBy !== req.user.id) {
-      return res.status(403).json({ msg: 'Topic not found or unauthorized.' });
-    }
-
-    const subtopic = await prisma.subtopic.create({
-      data: {
-        name,
-        topicId: topic_id,
-        createdBy: req.user.id,
-      },
-    });
-
-    res.status(201).json(subtopic);
-  } catch (error) {
-    console.error("Error in createSubtopic:", error);
-    res.status(500).json({ msg: "Internal Server Error" });
-  }
-};
-export const getAllSubtopics = async (req, res) => {
-  try {
-    const teacherId = req.user?.id;
-    if (!teacherId) {
-      return res.status(401).json({ msg: "Teacher is not authenticated" });
-    }
-
-    const { topic_id } = req.params;
-
-    const where = { createdBy: teacherId };
-    if (topic_id) {
-      where.topicId = topic_id;
-    }
-
-    const subtopics = await prisma.subtopic.findMany({
-      where,
       select: {
         id: true,
         name: true,
-        topicId: true,
+        createdBy: true,
       },
-      orderBy: { name: 'asc' }
     });
 
-    return res.status(200).json({ subtopics });
+    return res.status(201).json({
+      msg: "Topic created successfully!",
+      topic,
+    });
   } catch (error) {
-    console.error("Error in getAllSubtopics:", error);
-    res.status(500).json({ msg: "Internal server error" });
+    return res.status(400).json({
+      msg: "Error creating the topic",
+    });
+    
   }
-};
-export const createProblem = async (req, res) => {
+}
+
+export const getAllTopics = async(req, res) => {
+  const  teacherId  = req.user?.id;
+  if(!teacherId) {
+    return res.status(401).json({msg: "Failed to authenticate Teacher"});
+  }
+
   try {
-    let { title, link, difficulty, platform_id, topic_id, subtopic_id } = req.body;
+    const topics = await prisma.topic.findMany({
+      where : { createdBy : teacherId },
+      select : {
+        name : true,
+        id : true
+      }
 
-    if (
-      !title ||
-      !link ||
-      !difficulty ||
-      !platform_id ||
-      !topic_id ||
-      !subtopic_id
-    ) {
-      return res.status(400).json({ msg: 'All fields are required.' });
+    })
+
+    
+    return res.status(200).json({
+      msg : "Topics fetched successfully!",
+      topics
+    })
+    
+  } catch (error) {
+    console.log(error); 
+    return res.status(500).json({
+      msg: "Error fetching topics"
+    })
+    
+  }
+
+
+
+}
+
+
+export const createSubtopic = async(req, res) => {
+    const teacherId  = req.user?.id;
+    if (!teacherId) {
+      return res.status(401).json({
+        msg : "Failed to authenticate teacher"
+      })
     }
 
-    title = title.trim().toLowerCase();
-    link = link.trim();
-    difficulty = difficulty.toUpperCase();
-    platform_id = platform_id.trim().toLowerCase();
-    topic_id = topic_id.trim();
-    subtopic_id = subtopic_id.trim();
-
-    if (!['EASY', 'MEDIUM', 'HARD'].includes(difficulty)) {
-      return res.status(400).json({ msg: 'Difficulty must be one of EASY, MEDIUM, HARD.' });
+    const {topicId, name} = req.body;
+    const trimmedTopicId = typeof topicId === "string" ? topicId.trim() : topicId;
+    const trimmedName = typeof name === "string" ? name.trim() : name;
+    if(!trimmedTopicId || !trimmedName) {
+      return res.status(400).json({
+        msg: "TopicId and name is required for making subtopic" 
+      })
     }
 
-    const topic = await prisma.topic.findUnique({ where: { id: topic_id } });
-    if (!topic || topic.createdBy !== req.user.id) {
-      return res.status(403).json({ msg: 'Topic not found or unauthorized.' });
+    try {
+      const topic = await prisma.topic.findUnique({
+        where: { id: trimmedTopicId },
+      });
+
+      if (!topic) {
+        return res.status(404).json({ msg: "Topic not found" });
+      }
+
+      if (topic.createdBy !== teacherId) {
+        return res.status(403).json({
+          msg: "You can't create subtopics for this topic.",
+        });
+      }
+
+      const subTopic = await prisma.subtopic.create({
+        data: {
+          topicId: trimmedTopicId,
+          name: trimmedName,
+          createdBy: teacherId,
+        },
+        select: {
+          id: true,
+          name: true,
+          topicId: true,
+        },
+      });
+
+      return res.status(201).json({
+        msg: "Subtopic created Successfully!",
+        subTopic,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        msg: "Error creating subtopics",
+      });
     }
 
-    const subtopic = await prisma.subtopic.findUnique({ where: { id: subtopic_id } });
-    if (
-      !subtopic ||
-      subtopic.createdBy !== req.user.id ||
-      subtopic.topicId !== topic_id
-    ) {
-      return res.status(403).json({ msg: 'Subtopic not found, unauthorized, or does not belong to the topic.' });
+}
+
+
+export const getAllSubtopics = async(req, res) => {
+  
+  const teacherId = req.user?.id;
+
+  if(!teacherId) {
+    return res.status(401).json({
+      msg : "Failed to authenticate Teacher"
+    })
+  } 
+
+  const topicId  = req.params.topic_id;
+
+  if(!topicId){
+    return res.status(400).json({
+      msg : "topicId is required"
+    })
+  }
+
+  try {
+    const subTopics = await prisma.topic.findUnique(
+      {
+        where: {id : topicId},
+        include:{
+          subtopics:{
+            select : {
+              id: true,
+              name : true
+
+            }
+          }
+        }
+      }
+    )
+    if(!subTopics){
+      return res.status(404).json({
+      msg : "subtopics doesnt exist",
+      
+    })} 
+    if(subTopics.createdBy !== teacherId){
+      return res.status(404).json({
+      msg : "subtopics doesnt exist",
+      
+    })
+    
+    
+
+    }
+    return res.status(200).json({
+      msg : "Fetched all subtopics",
+      subTopics: subTopics.subtopics
+    })
+    
+  } catch (error) {
+    console.log(error);
+     return res.status(500).json({
+      msg : "Failed to Fetched all subtopics",
+      
+    })
+
+    
+  }
+
+}
+
+
+export const createProblem = async(req, res) => {
+  
+  const teacherId = req.user?.id;
+  if(!teacherId) {
+    return res.status(401).json({
+      msg : "Failed to authenticate teacher"
+    })
+  }
+  
+  const { topicId, subTopicId, title, link, difficulty, platformId } = req.body;
+  const trimmedTitle  = typeof title === 'string' ? title.trim() : title;
+  const trimmedLink  = typeof link === 'string' ? link.trim() : link;
+  const trimmedDifficulty = typeof difficulty === 'string' ? difficulty.trim(): difficulty;
+  const trimmedPlatformId = typeof platformId === 'string' ? platformId.trim(): platformId;
+  const trimmedSubTopicId  = typeof subTopicId === 'string' ? subTopicId.trim(): subTopicId;
+  const trimmedTopicId  = typeof topicId === 'string' ? topicId.trim(): topicId;
+  
+
+  if (!trimmedTopicId|| !trimmedTitle|| !title|| !trimmedLink|| !trimmedDifficulty|| !trimmedPlatformId|| !trimmedSubTopicId ) {
+    return res.status(400).json({
+      msg: "topicId, subtopicId, Title, Link, difficulty, platform Id is required"
+    })
+  }
+  try {
+    const topic  = await prisma.topic.findUnique({
+      where: {id: trimmedTopicId}
+    })
+
+    if(!topic || topic.createdBy !== teacherId) {
+      return res.status(400).json({
+        msg: "Topic doesn't exist "
+      })
+    }
+    const subTopic  = await prisma.subtopic.findUnique({
+      where: {id: trimmedSubTopicId}
+    })
+    if(!subTopic || subTopic.createdBy !== teacherId || subTopic.topicId !== trimmedTopicId) {
+      return res.status(400).json({
+        msg: "SubTopic doesn't exist "
+      })
     }
 
-    const platform = await prisma.platform.findUnique({ where: { id: platform_id } });
-    if (!platform) {
-      return res.status(400).json({ msg: 'Platform does not exist.' });
-    }
 
     const problem = await prisma.problem.create({
       data: {
-        title,
-        link,
-        difficulty,
-        platformId: platform_id,
-        topicId: topic_id,
-        subtopicId: subtopic_id,
-        addedBy: req.user.id,
-      },
-    });
+        topicId : trimmedTopicId,
+        subtopicId: trimmedSubTopicId, 
+        title: trimmedTitle, 
+        link : trimmedLink,
+        difficulty: trimmedDifficulty,
+        platformId: trimmedPlatformId,
+        addedBy: teacherId
 
-    res.status(201).json(problem);
-  } catch (error) {
-    console.error("Error in createProblem:", error);
-    res.status(500).json({ msg: "Internal server error" });
-  }
-};
-
-export const getAllProblems = async (req, res) => {
-  try {
-    const teacherId = req.user?.id;
-    if (!teacherId) {
-      return res.status(401).json({ msg: "Teacher is not authenticated" });
-    }
-
-    // Optional filters by query parameters
-    const { topic_id, subtopic_id, difficulty } = req.query;
-
-    // Build Prisma where filter
-    const where = { addedBy: teacherId };
-
-    if (topic_id) where.topicId = topic_id;
-    if (subtopic_id) where.subtopicId = subtopic_id;
-    if (difficulty && ['EASY', 'MEDIUM', 'HARD'].includes(difficulty.toUpperCase())) {
-      where.difficulty = difficulty.toUpperCase();
-    }
-
-    const problems = await prisma.problem.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        link: true,
-        difficulty: true,
-        platformId: true,
-        topicId: true,
-        subtopicId: true,
-        addedBy: true,
-      },
-      orderBy: {
-        title: 'asc',
-      },
-    });
-
-    return res.status(200).json({ problems });
-  } catch (error) {
-    console.error("Error in getAllProblems:", error);
-    res.status(500).json({ msg: "Internal server error" });
-  }
-};
-
-export const assignHomework = async (req, res) => {
-  try {
-    const teacherId = req.user?.id;
-    if (!teacherId) {
-      return res.status(401).json({ msg: "Teacher authentication failed." });
-    }
-
-    let { batch_id, problem_id, assignedDate } = req.body;
-
-    if (!batch_id || !problem_id) {
-      return res.status(400).json({ msg: "batch_id and problem_id are required." });
-    }
-
-    batch_id = batch_id.trim();
-    problem_id = problem_id.trim();
-
-    let assignedDateObj;
-    if (assignedDate) {
-      assignedDateObj = new Date(assignedDate);
-      if (isNaN(assignedDateObj.getTime())) {
-        return res.status(400).json({ msg: "Invalid assignedDate format." });
       }
-    } else {
-      assignedDateObj = new Date();
-    }
 
-    const batch = await prisma.batch.findFirst({
-      where: {
-        id: batch_id,
-        college: {
-          users: {
-            some: { id: teacherId }
-          }
-        },
-        teacherBatch: {
-          some: { teacherId }
-        }
-      }
-    });
 
-    if (!batch) {
-      return res.status(403).json({ msg: "Unauthorized or invalid batch." });
-    }
-
-    const problem = await prisma.problem.findUnique({
-      where: { id: problem_id }
-    });
-
-    if (!problem || problem.addedBy !== teacherId) {
-      return res.status(403).json({ msg: "Problem not found or unauthorized." });
-    }
-
-    let problemAssignment = await prisma.problemAssignment.findFirst({
-      where: { 
-        problemId: problem_id,
-        batchId: batch_id
-      }
-    });
-
-    if (!problemAssignment) {
-      problemAssignment = await prisma.problemAssignment.create({
-        data: {
-          problemId: problem_id,
-          batchId: batch_id,
-          assignedBy: teacherId,
-          assignedDate: assignedDateObj,
-        }
-      });
-    } else if (assignedDateObj.getTime() !== problemAssignment.assignedDate.getTime()) {
-      problemAssignment = await prisma.problemAssignment.update({
-        where: { id: problemAssignment.id },
-        data: { assignedDate: assignedDateObj },
-      });
-    }
-
-    const studentsInBatch = await prisma.studentBatch.findMany({
-      where: { batchId: batch_id },
-      select: { studentId: true }
-    });
-    const studentIds = studentsInBatch.map(s => s.studentId);
-
-    const assigned = [];
-    const alreadyAssigned = [];
-
-    for (const studentId of studentIds) {
-      const existingStatus = await prisma.problemStatus.findUnique({
-        where: {
-          problemAssignmentId_studentId: {
-            problemAssignmentId: problemAssignment.id,
-            studentId
-          }
-        }
-      });
-
-      if (existingStatus) {
-        alreadyAssigned.push(studentId);
-      } else {
-        await prisma.problemStatus.create({
-          data: {
-            problemAssignmentId: problemAssignment.id,
-            studentId,
-            status: 'PENDING',
-            syncedAt: new Date(),
-          }
-        });
-        assigned.push(studentId);
-      }
-    }
+    })
 
     return res.status(201).json({
-      msg: `Problem assigned to batch with ${assigned.length} new student(s).`,
-      assignmentId: problemAssignment.id,
-      assignedStudents: assigned,
-      alreadyAssignedStudents: alreadyAssigned,
-      assignedDate: problemAssignment.assignedDate,
-    });
+      msg : "Problem created successfully!",
+      problem
+     })
+    
 
   } catch (error) {
-    console.error("Error in assignHomework:", error);
-    return res.status(500).json({ msg: "Internal server error." });
+    return res.status(500).json({
+      msg : "Error created the Problem!",
+      
+     })
+    
+  }
+
+
+}
+
+
+
+export const getAllProblems = async(req, res) => {
+
+
+  const teacherId = req.user?.id;
+
+  if(!teacherId) {
+    return res.status(401).json({
+      msg : "Failed to authenticate teacher"
+    })
+  }
+
+  const {topicId, subTopicId} = req.query;
+
+  const trimmedTopicId = typeof topicId === "string" ? topicId.trim() : topicId
+  const trimmedSubTopicId = typeof subTopicId === "string" ? subTopicId.trim() : subTopicId
+
+  
+  if(!trimmedSubTopicId || !trimmedTopicId) return res.status(400).json({
+    msg : "topicId and subtopicId is required"
+  })
+
+
+  const topic = await prisma.topic.findUnique({
+    where:{id: trimmedTopicId}
+  })
+
+  if(!topic || topic.createdBy !== teacherId ){
+    return res.status(404).json({
+      msg : "TOpic not found"
+    })
+  }
+
+
+  const subTopic = await prisma.subtopic.findUnique({
+    where:{id: trimmedSubTopicId}
+  })
+
+  if(!subTopic || subTopic.topicId !== trimmedTopicId){
+     return res.status(404).json({
+      msg : "Subtopic not found"
+    })
+
+  }
+
+
+  try {
+    const problems = await prisma.problem.findMany({
+      where: {topicId: trimmedTopicId, subtopicId: trimmedSubTopicId}
+    })
+
+    return res.status(200).json({
+      msg : "Problems fetched Successfully!",
+      problems
+    })
+    
+  } catch (error) {
+    return res.status(500).json({
+      msg : "Error fetching the problem!",
+      
+    })
+    
+  }
+
+}
+
+
+export const assignHomework = async (req, res) => {
+  const teacherId = req.user?.id;
+  if (!teacherId) {
+    return res.status(401).json({ msg: "Failed to authenticate!" });
+  }
+
+  const { problemId, batchId } = req.body;
+  const trimmedProblemId =
+    typeof problemId === "string" ? problemId.trim() : problemId;
+  const trimmedBatchId = typeof batchId === "string" ? batchId.trim() : batchId;
+
+  if (!trimmedProblemId || !trimmedBatchId) {
+    return res.status(400).json({
+      msg: "problemId, batchId is required",
+    });
+  }
+
+  try {
+    const problem = await prisma.problem.findUnique({
+      where: { id: trimmedProblemId },
+    });
+    if (!problem) {
+      return res.status(404).json({ msg: "Problem not found" });
+    }
+    if (problem.addedBy !== teacherId) {
+      return res.status(403).json({ msg: "You cannot assign this problem" });
+    }
+
+    const batch = await prisma.batch.findUnique({
+      where: { id: trimmedBatchId },
+    });
+    if (!batch) {
+      return res.status(404).json({ msg: "Batch not found" });
+    }
+
+    const teacherBatch = await prisma.teacherBatch.findUnique({
+      where: {
+        teacherId_batchId: {
+          teacherId,
+          batchId: trimmedBatchId,
+        },
+      },
+    });
+    if (!teacherBatch) {
+      return res.status(403).json({ msg: "You dont have access to the batch" });
+    }
+
+    const existing = await prisma.problemAssignment.findFirst({
+      where: {
+        problemId: trimmedProblemId,
+        batchId: trimmedBatchId,
+      },
+    });
+    if (existing) {
+      return res.status(409).json({
+        msg: "Problem already assigned to this batch",
+      });
+    }
+
+    const homework = await prisma.problemAssignment.create({
+      data: {
+        problemId: trimmedProblemId,
+        batchId: trimmedBatchId,
+        assignedBy: teacherId,
+      },
+      include: {
+        problem: {
+          select: {
+            id: true,
+            title: true,
+            link: true,
+            difficulty: true,
+            subtopicId: true,
+            topicId: true,
+          },
+        },
+        batch: { select: { id: true, name: true } },
+      },
+    });
+
+    return res.status(201).json({
+      msg: "Problem assigned successfully!",
+      homework,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: "Error assigning homework" });
   }
 };
+
+
+
+
+
 

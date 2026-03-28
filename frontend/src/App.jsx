@@ -1,16 +1,14 @@
 
 import './App.css'
-import {Route, Routes} from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import StudentLogin from './Pages/StudentLogin'
 import Homepage from './Pages/Homepage'
 import TeacherLogin from "./Pages/TeacherLogin";
 import InstitutionLogin from "./Pages/InstitutionLogin";
 import ProtectedRoute from './Components/ProtectedRoute'
-import StudentDashboard from './Pages/StudentDashboard'
 import TeacherDashboard from './Pages/TeacherDashboard'
 import CollegeDashboard from './Pages/CollegeDashboard'
 import CollegeSetting from './Pages/CollegeSetting'
-
 import Entry from './Pages/Entry';
 import BatchSetting from './Pages/BatchSetting'
 import TeacherSetting from './Pages/TeacherSetting'
@@ -18,7 +16,6 @@ import BatchSideLayout from './Pages/BatchSideLayout'
 import Dashboard from './Pages/Sot23b1Dashboard';
 import Students from './Pages/Sot23b1Students';
 import Teachers from './Pages/BatchTeachers';
-import Content from './Pages/Sot23b1Content';
 import TeacherEnd from './Pages/TeacherEnd'
 import TeacherEndBatch  from './Pages/TeacherEndBatch'
 import TeacherEndProblemList from './Pages/TeacherEndProblemList'
@@ -32,7 +29,6 @@ import Table from './Pages/Table'
 import Visual from './Pages/Visual'
 import StudentProfile from './Pages/StudentProfile';
 import TeacherDetails from './Pages/TeacherDetails';
-import TeacherWorkflowMock from './Pages/TeacherWorkflowMock';
 
 
 
@@ -79,7 +75,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="students" element={<Students />} />
           <Route path="teachers" element={<Teachers />} />
-          <Route path="content" element={<Content />} />
+          <Route path="problemslist" element={<TeacherEndProblemList />} />
         </Route>
 
 
@@ -102,12 +98,8 @@ function App() {
           </Route>
         </Route>
         <Route path="/teacher/problems" element={<TeacherProblemsPage />} />
-        <Route path="/teacher/workflow-mock" element={<TeacherWorkflowMock />} />
 
-      <Route
-        path="/student-dashboard"
-        element={<StudentDashboard />}
-      />
+      <Route path="/student-dashboard" element={<Navigate to="/student/assignment" replace />} />
       <Route path='/student/assignment' element={<TeacherEndProblemList/>}></Route>
       <Route path='/student/profile' element={<StudentProfile/>}></Route>
       </Routes>

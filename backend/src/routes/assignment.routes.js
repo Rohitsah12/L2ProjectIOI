@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { authDynamic, authTeacher } from "../middlewares/auth.middleware.js";
-import { assignHomework, createProblem, createSubtopic, createTopic, getAllProblems, getAllSubtopics, getAllTopics } from "../controllers/assignment.controller.js";
+// import { assignHomework, createProblem, createSubtopic, createTopic, getAllProblems, getAllSubtopics, getAllTopics } from "../controllers/assignment.controller.js";
+import { createTopic, getAllTopics, createSubtopic, getAllSubtopics, createProblem, getAllProblems, assignHomework }  from "../controllers/assignment.controller.js"
  
 
 const assignmentRouter=Router();
 
-assignmentRouter.post('/create-topic',authDynamic,authTeacher,createTopic)
+assignmentRouter.post('/create-topic', authDynamic, authTeacher, createTopic);
 assignmentRouter.get('/get-all-topics',authDynamic,authTeacher,getAllTopics)
 
 assignmentRouter.post('/create-subtopic', authDynamic, authTeacher, createSubtopic );

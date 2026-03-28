@@ -58,59 +58,70 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      
+    <div className="w-full space-y-6">
       {/* KPI Section */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
         {[{ label: "Students", value: studentCount }, { label: "Teachers", value: teacherCount }, { label: "Questions Assigned", value: "500" }, { label: "Topics Covered", value: "8" }, { label: "Active Students", value: "60%" }]
           .map((item, idx) => (
-          <div key={idx} className="bg-white rounded-2xl p-6 shadow hover:shadow-md transition">
-            <div className="text-gray-500 text-sm font-medium tracking-tight">{item.label}</div>
-            <div className="text-3xl font-bold text-gray-800 mt-2">{item.value}</div>
+          <div
+            key={idx}
+            className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm ring-1 ring-slate-100 transition hover:shadow-md sm:p-5"
+          >
+            <div className="text-xs font-medium tracking-tight text-slate-500 sm:text-sm">{item.label}</div>
+            <div className="mt-1.5 text-2xl font-bold tabular-nums text-slate-900 sm:text-3xl">{item.value}</div>
           </div>
         ))}
       </div>
 
       {/* Problem Solving Stats */}
-      <div className="bg-white rounded-2xl shadow p-6">
-        <h2 className="text-lg font-bold text-gray-700 mb-4">Problem Solving Stats</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-blue-50 rounded-2xl p-6 flex flex-col items-center">
-            <div className="text-4xl font-bold text-blue-600">100</div>
-            <div className="font-light text-gray-600 mt-2">Median Problems Solved</div>
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+        <h2 className="mb-4 text-base font-semibold text-slate-900">Problem Solving Stats</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="flex flex-col items-center rounded-2xl bg-sky-50/90 p-6 ring-1 ring-sky-100">
+            <div className="text-4xl font-bold text-sky-700">100</div>
+            <div className="mt-2 text-sm text-slate-600">Median Problems Solved</div>
           </div>
-          <div className="bg-blue-50 rounded-2xl p-6 flex flex-col items-center">
-            <div className="text-4xl font-bold text-blue-600">100</div>
-            <div className="font-light text-gray-600 mt-2">Avg. Problems Solved</div>
+          <div className="flex flex-col items-center rounded-2xl bg-sky-50/90 p-6 ring-1 ring-sky-100">
+            <div className="text-4xl font-bold text-sky-700">100</div>
+            <div className="mt-2 text-sm text-slate-600">Avg. Problems Solved</div>
           </div>
         </div>
       </div>
 
       {/* Top Performers */}
-      <div className="bg-white rounded-2xl shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
-            <h2 className="font-bold text-gray-700">Top Performers</h2>
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 shrink-0 text-amber-500" aria-hidden />
+            <h2 className="font-semibold text-slate-900">Top Performers</h2>
           </div>
-          <button className="text-blue-600 hover:underline text-sm font-medium">See All</button>
+          <button type="button" className="text-sm font-medium text-sky-700 hover:underline">
+            See All
+          </button>
         </div>
         <div className="space-y-2">
           {topPerformers.map((performer, index) => (
-            <div key={index} className="flex items-center justify-between bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition">
-              <div className="bg-gray-300 text-gray-800 font-bold px-3 py-1 rounded-full text-sm">{performer.rank}</div>
-              <div className="font-medium text-gray-700">{performer.name}</div>
-              <div className="text-sm text-gray-600">{performer.solved}/{performer.total} problems</div>
+            <div
+              key={index}
+              className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 transition hover:bg-slate-100/80"
+            >
+              <div className="flex h-8 min-w-8 items-center justify-center rounded-full bg-slate-200/90 text-sm font-bold text-slate-800">
+                {performer.rank}
+              </div>
+              <div className="min-w-0 flex-1 font-medium text-slate-800">{performer.name}</div>
+              <div className="shrink-0 text-sm tabular-nums text-slate-600">
+                {performer.solved}/{performer.total} problems
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Retention / Drop-off Curve */}
-      <div className="bg-white rounded-2xl shadow p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Activity className="w-5 h-5 text-green-500" />
-          <h3 className="text-lg font-semibold text-gray-900">Top Performers Retention / Drop-off Curve</h3>
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Activity className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+          <h3 className="text-base font-semibold text-slate-900">Retention / Drop-off Curve</h3>
         </div>
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={retentionData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -122,14 +133,14 @@ export default function Dashboard() {
             <Area type="monotone" dataKey="dropped" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} />
           </AreaChart>
         </ResponsiveContainer>
-        <div className="flex items-center gap-4 mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="text-sm text-gray-600">Active Students</span>
+            <div className="h-3 w-3 rounded-full bg-emerald-500" />
+            <span className="text-sm text-slate-600">Active Students</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <span className="text-sm text-gray-600">Dropped Out</span>
+            <div className="h-3 w-3 rounded-full bg-red-500" />
+            <span className="text-sm text-slate-600">Dropped Out</span>
           </div>
         </div>
       </div>

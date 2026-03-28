@@ -1,6 +1,6 @@
 const redirectByRole = (role, navigate) => {
     const roleRoutes = {
-        STUDENT:"/student-dashboard",
+        STUDENT:"/student/assignment",
         TEACHER:"/teacher-dashboard",
         COLLEGE:"/college-dashboard"
     }

@@ -70,10 +70,11 @@ export default function TeacherEnd() {
           <div className="text-2xl font-medium text-gray-700">
             Assign Problem to Batches and Track Progress
           </div>
-          {problemCount !== null && (
+              {problemCount !== null && (
             <p className="text-sm text-gray-600 mt-2">
               Your problem bank: <strong>{problemCount}</strong> problem
-              {problemCount === 1 ? "" : "s"} — open the workspace to add topics, subtopics, and assign to batches.
+              {problemCount === 1 ? "" : "s"} — open <strong>My Problem List</strong> to create problems. In each batch, use{" "}
+              <strong>Content</strong> to add topics, subtopics, and assign problems.
             </p>
           )}
         </div>
@@ -87,13 +88,7 @@ export default function TeacherEnd() {
 
       {/* Dummy full flow + Problem list */}
       <div className="flex justify-end flex-wrap gap-3 mt-10">
-        <button
-          type="button"
-          onClick={() => navigate("/teacher/workflow-mock")}
-          className="bg-violet-100 border border-violet-300 text-violet-900 px-4 py-2 font-medium rounded-xl shadow-sm hover:bg-violet-200 transition text-sm"
-        >
-          Full flow (dummy UI)
-        </button>
+        
         <button
           type="button"
           onClick={() => navigate("/teacher/problems")}
@@ -109,7 +104,7 @@ export default function TeacherEnd() {
           <motion.div
             key={batch.id}
             onClick={() =>
-              navigate(`/teacher/problems?batchId=${encodeURIComponent(batch.id)}`)
+              navigate(`/teacher/${batch.id}`)
             }
             whileHover={{ scale: 1.03 }}
             className={`relative bg-gradient-to-br ${

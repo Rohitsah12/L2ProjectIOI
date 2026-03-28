@@ -1,800 +1,495 @@
-
-
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
 import {
-  StickyNote,
-  ChevronDown,
-  ChevronUp,
   Plus,
-  Save,
-  Trash2,
+  BookOpen,
+  Library,
+  ExternalLink,
+  ChevronRight,
+  ListTree,
   Eye,
-  Edit3,
-  X,
 } from "lucide-react";
+import {
+  loadOutline,
+  saveOutline,
+  recomputeTopic,
+  recomputeAll,
+  defaultTopics,
+  normalizeOutlineShape,
+  displayPlatform,
+  platformStyleClass,
+} from "../utils/teacherBatchOutline";
 
-const categoryColors = {
-  Easy: "text-emerald-700 font-medium",
-  Medium: "text-orange-700 font-medium",
-  Hard: "text-rose-700 font-medium",
+const api = axios.create({
+  baseURL: "http://localhost:3000/api",
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+});
+
+const diffBadge = (d) => {
+  const base = "text-xs font-semibold px-2 py-0.5 rounded-full shrink-0";
+  if (d === "Easy") return `${base} bg-emerald-100 text-emerald-800`;
+  if (d === "Medium") return `${base} bg-orange-100 text-orange-800`;
+  return `${base} bg-rose-100 text-rose-800`;
 };
 
-const ScheduleCards = () => {
+export default function TeacherEndContent() {
+  const { id: batchId } = useParams();
   const navigate = useNavigate();
-  const [topics, setTopics] = useState([
-    {
-      topic: "Algorithms Basics",
-      classes: [
-        {
-          date: "2024-10-07",
-          className: "Class 1 : Intro to Algorithms and Optimisations",
-          contentCovered: [
-            "DS / Algo Intro with Dijkstras",
-            "Factors count",
-            "Rotate arr[] by k times and optimisation",
-          ],
-          problems: [
-            {
-              name: "Number of factors",
-              link: "https://www.geeksforgeeks.org/",
-              category: "Easy",
-              platform: "Geeks for Geeks",
-              hidden: false,
-            },
-            {
-              name: "Rotate Array",
-              link: "https://leetcode.com/",
-              category: "Medium",
-              platform: "LeetCode",
-              hidden: false,
-            },
-          ],
-          notes: [{ name: "Class1 Notes", link: "https://example.com/class1" }],
-        },
-      ],
-    },
-  ]);
+  const location = useLocation();
+  const isTeacherBatch =
+    Boolean(batchId) && /\/teacher\//i.test(location.pathname);
 
-  const [openTopics, setOpenTopics] = useState([]);
-  const [newTopicMode, setNewTopicMode] = useState(false);
-  const [addClassMode, setAddClassMode] = useState(null);
-  const [editClassMode, setEditClassMode] = useState(null); // [topicIndex, classIndex]
-
-  const [newTopic, setNewTopic] = useState({ topic: "", classes: [] });
-  const [newClass, setNewClass] = useState({
-    date: "",
-    className: "",
-    contentCovered: [""],
-    problems: [
-      { name: "", link: "", category: "", platform: "", hidden: false },
-    ],
-    notes: [{ name: "", link: "" }],
+  const [data, setData] = useState(() => {
+    if (batchId) {
+      const loaded = loadOutline(batchId);
+      if (loaded) return loaded;
+      return [];
+    }
+    return defaultTopics;
   });
 
-  // Topic Toggle
-  const toggleTopic = (tIdx) => {
-    setOpenTopics((prev) =>
-      prev.includes(tIdx) ? prev.filter((i) => i !== tIdx) : [...prev, tIdx]
-    );
-  };
+  const [selectedTopicIndex, setSelectedTopicIndex] = useState(0);
+  const [newTopicMode, setNewTopicMode] = useState(false);
+  const [newTopicTitle, setNewTopicTitle] = useState("");
+  const [addSubtopicForTopic, setAddSubtopicForTopic] = useState(false);
+  const [newSubtopic, setNewSubtopic] = useState({
+    title: "",
+    notesLink: "",
+  });
+  /** Which subtopic index under the selected topic is expanded (`null` = all collapsed). */
+  const [expandedSubtopicIndex, setExpandedSubtopicIndex] = useState(null);
+  const [batchName, setBatchName] = useState(null);
 
-  const expandAll = () => {
-    setOpenTopics(
-      openTopics.length === topics.length ? [] : topics.map((_, i) => i)
-    );
-  };
+  const persist = useCallback(
+    (next) => {
+      setData(next);
+      if (batchId && isTeacherBatch) {
+        saveOutline(batchId, next);
+      }
+    },
+    [batchId, isTeacherBatch]
+  );
 
-  // Toggle problem visibility
-  const toggleProblemVisibility = (tIdx, clsIdx, pIdx) => {
-    const updated = [...topics];
-    updated[tIdx].classes[clsIdx].problems[pIdx].hidden =
-      !updated[tIdx].classes[clsIdx].problems[pIdx].hidden;
-    setTopics(updated);
-  };
-
-  // Add Topic
-  const addNewTopic = () => {
-    if (newTopic.topic.trim() !== "") {
-      setTopics([...topics, { ...newTopic, classes: [] }]);
-      resetNewTopic();
+  useEffect(() => {
+    if (!batchId || !isTeacherBatch) return;
+    const loaded = loadOutline(batchId);
+    if (loaded) {
+      normalizeOutlineShape(loaded);
+      recomputeAll(loaded);
+      setData(loaded);
     }
+  }, [batchId, isTeacherBatch, location.key, location.pathname]);
+
+  useEffect(() => {
+    if (!batchId || !isTeacherBatch) {
+      setBatchName(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get("/teacher/get-batch");
+        const list = res.data?.batches ?? [];
+        const b = Array.isArray(list)
+          ? list.find((x) => String(x?.id) === String(batchId))
+          : null;
+        if (!cancelled) setBatchName(b?.name ?? null);
+      } catch {
+        if (!cancelled) setBatchName(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [batchId, isTeacherBatch]);
+
+  useEffect(() => {
+    if (data.length === 0) {
+      setSelectedTopicIndex(0);
+      return;
+    }
+    setSelectedTopicIndex((i) => Math.min(i, data.length - 1));
+  }, [data.length]);
+
+  useEffect(() => {
+    setExpandedSubtopicIndex(null);
+  }, [selectedTopicIndex]);
+
+  const toggleSubtopicExpanded = (cIndex) => {
+    setExpandedSubtopicIndex((prev) => (prev === cIndex ? null : cIndex));
   };
 
-  const resetNewTopic = () => {
-    setNewTopic({ topic: "", classes: [] });
+  const addTopic = () => {
+    const t = newTopicTitle.trim();
+    if (!t) return;
+    const next = [
+      ...data,
+      {
+        title: t,
+        total: 0,
+        completed: 0,
+        classes: [],
+      },
+    ];
+    recomputeAll(next);
+    persist(next);
+    setNewTopicTitle("");
     setNewTopicMode(false);
+    setSelectedTopicIndex(next.length - 1);
   };
 
-  // Add Class
-  const addClassToTopic = (tIdx) => {
-    setAddClassMode(tIdx);
-    if (!openTopics.includes(tIdx)) {
-      setOpenTopics([...openTopics, tIdx]);
-    }
-  };
-
-  const saveNewClass = () => {
-    if (addClassMode !== null) {
-      const updated = [...topics];
-      updated[addClassMode].classes.push({ ...newClass });
-      setTopics(updated);
-      resetNewClass();
-    }
-  };
-
-  const resetNewClass = () => {
-    setNewClass({
-      date: "",
-      className: "",
-      contentCovered: [""],
-      problems: [
-        { name: "", link: "", category: "", platform: "", hidden: false },
-      ],
-      notes: [{ name: "", link: "" }],
+  const addSubtopic = (tIndex) => {
+    const title = newSubtopic.title.trim();
+    if (!title) return;
+    const next = structuredClone(data);
+    next[tIndex].classes.push({
+      title,
+      notesLink: newSubtopic.notesLink.trim() || "#",
+      total: 0,
+      completed: 0,
+      problems: [],
     });
-    setAddClassMode(null);
+    recomputeTopic(next[tIndex]);
+    recomputeAll(next);
+    persist(next);
+    setNewSubtopic({ title: "", notesLink: "" });
+    setAddSubtopicForTopic(false);
   };
 
-  // Edit Class
-  const startEditingClass = (tIdx, clsIdx) => {
-    const cls = topics[tIdx].classes[clsIdx];
-    setEditClassMode([tIdx, clsIdx]);
-    setNewClass({...cls});
-  };
-
-  const saveEditedClass = () => {
-    if (editClassMode) {
-      const [tIdx, clsIdx] = editClassMode;
-      const updated = [...topics];
-      updated[tIdx].classes[clsIdx] = { ...newClass };
-      setTopics(updated);
-      cancelEditing();
-    }
-  };
-
-  const cancelEditing = () => {
-    setEditClassMode(null);
-    setNewClass({
-      date: "",
-      className: "",
-      contentCovered: [""],
-      problems: [
-        { name: "", link: "", category: "", platform: "", hidden: false },
-      ],
-      notes: [{ name: "", link: "" }],
+  const goAssignProblems = (topicIndex, subtopicIndex) => {
+    if (!batchId) return;
+    navigate("/teacher/problems", {
+      state: {
+        assignMode: true,
+        batchId,
+        returnPath: `/teacher/${batchId}/content`,
+        topicIndex,
+        subtopicIndex,
+      },
     });
   };
 
-  // Delete Note from class
-  const deleteNote = (tIdx, clsIdx, noteIdx) => {
-    const updated = [...topics];
-    updated[tIdx].classes[clsIdx].notes.splice(noteIdx, 1);
-    setTopics(updated);
-  };
-
-  // Delete Problem from class
-  const deleteProblem = (tIdx, clsIdx, problemIdx) => {
-    const updated = [...topics];
-    updated[tIdx].classes[clsIdx].problems.splice(problemIdx, 1);
-    setTopics(updated);
-  };
+  const topic = data[selectedTopicIndex];
+  const topicClasses = topic?.classes ?? [];
 
   return (
-    <div className="p-2 min-h-screen mt-2">
-
-      <div className="flex justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 text-center text-gray-800">
-            Content
-          </h1>
-        </div>
-        <div className="flex gap-1"> 
-          <button
-            onClick={expandAll}
-            className="px-5 py-2 bg-yellow-200 text-black rounded shadow hover:bg-yellow-300 transition"
-          >
-            {openTopics.length === topics.length ? "Collapse All" : "Expand All"}
-          </button>
-          <button
-            onClick={() => setNewTopicMode(true)}
-            className="px-5 py-2 bg-yellow-200 text-black rounded shadow hover:bg-yellow-300 transition flex items-center gap-2"
-          >
-            <Plus size={16} /> Add Topic
-          </button>
-        </div>
-      </div>
-
-      {/* New Topic Form */}
-      {newTopicMode && (
-        <div className="bg-white p-6 rounded-xl shadow mb-6">
-          <h2 className="text-lg font-semibold mb-4">New Topic</h2>
-          <input
-            type="text"
-            placeholder="Topic Name"
-            className="w-full p-2 border rounded mb-4"
-            value={newTopic.topic}
-            onChange={(e) => setNewTopic({ ...newTopic, topic: e.target.value })}
-          />
-
-          <div className="flex gap-2">
-            <button
-              onClick={addNewTopic}
-              className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 flex items-center gap-2"
-            >
-              <Save size={16} /> Save Topic
-            </button>
-            <button
-              onClick={resetNewTopic}
-              className="px-4 py-2 bg-gray-500 text-white rounded shadow hover:bg-gray-600"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Topics */}
-      <div className="space-y-6">
-        {topics.map((topic, tIdx) => (
-          <div
-            key={tIdx}
-            className="bg-white shadow-md rounded-xl overflow-hidden"
-          >
-            {/* Topic Header */}
-            <button
-              onClick={() => toggleTopic(tIdx)}
-              className="w-full flex justify-between items-center px-6 py-4 bg-gray-100 text-gray-800 font-semibold text-lg hover:bg-gray-200 transition"
-            >
-              {topic.topic}
-              {openTopics.includes(tIdx) ? <ChevronUp /> : <ChevronDown />}
-            </button>
-
-            {/* Classes */}
-            {openTopics.includes(tIdx) && (
-              <div className="p-6 space-y-6">
-                {topic.classes.map((cls, clsIdx) => {
-                  const isEditing = editClassMode && editClassMode[0] === tIdx && editClassMode[1] === clsIdx;
-                  
-                  return (
-                    <div
-                      key={clsIdx}
-                      className="bg-white border shadow-sm rounded-lg p-6 flex flex-col md:flex-row items-start md:items-stretch hover:shadow-md transition relative"
-                    >
-                      {/* Edit Button */}
-                      {!isEditing && (
-                        <button
-                          onClick={() => startEditingClass(tIdx, clsIdx)}
-                          className="absolute top-4 right-4 text-gray-500 hover:text-blue-600"
-                        >
-                          <Edit3 size={18} />
-                        </button>
-                      )}
-
-                      {isEditing ? (
-                        // Edit Mode
-                        <div className="w-full">
-                          <h3 className="text-lg font-semibold mb-4">Edit Class</h3>
-
-                          <div className="space-y-3">
-                            <input
-                              type="date"
-                              className="p-2 border rounded w-full"
-                              value={newClass.date}
-                              onChange={(e) =>
-                                setNewClass({ ...newClass, date: e.target.value })
-                              }
-                            />
-
-                            <input
-                              type="text"
-                              placeholder="Class Name"
-                              className="p-2 border rounded w-full"
-                              value={newClass.className || cls.className}
-                              onChange={(e) =>
-                                setNewClass({ ...newClass, className: e.target.value })
-                              }
-                            />
-
-                            <textarea
-                              placeholder="Content Covered (comma separated)"
-                              className="p-2 border rounded w-full"
-                              value={newClass.contentCovered.join(", ") || cls.contentCovered.join(", ")}
-                              onChange={(e) =>
-                                setNewClass({
-                                  ...newClass,
-                                  contentCovered: e.target.value
-                                    .split(",")
-                                    .map((item) => item.trim()),
-                                })
-                              }
-                            ></textarea>
-
-                            {/* Notes */}
-                            <h4 className="font-medium text-gray-700">Notes</h4>
-                            {cls.notes.map((note, nIdx) => (
-                              <div key={nIdx} className="flex gap-2 mb-2">
-                                <input
-                                  type="text"
-                                  placeholder="Note Name"
-                                  className="p-2 border rounded w-1/2"
-                                  value={note.name}
-                                  onChange={(e) => {
-                                    const updatedNotes = [...cls.notes];
-                                    updatedNotes[nIdx].name = e.target.value;
-                                    setNewClass({ ...newClass, notes: updatedNotes });
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Link"
-                                  className="p-2 border rounded w-1/2"
-                                  value={note.link}
-                                  onChange={(e) => {
-                                    const updatedNotes = [...cls.notes];
-                                    updatedNotes[nIdx].link = e.target.value;
-                                    setNewClass({ ...newClass, notes: updatedNotes });
-                                  }}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => deleteNote(tIdx, clsIdx, nIdx)}
-                                  className="text-red-500"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </div>
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setNewClass({
-                                  ...newClass,
-                                  notes: [...cls.notes, { name: "", link: "" }],
-                                })
-                              }
-                              className="text-indigo-600 text-sm"
-                            >
-                              + Add Note
-                            </button>
-
-                            {/* Problems */}
-                            <h4 className="font-medium text-gray-700">Problems</h4>
-                            {cls.problems.map((prob, pIdx) => (
-                              <div key={pIdx} className="flex gap-2 mb-2 items-center">
-                                <input
-                                  type="text"
-                                  placeholder="Problem Name"
-                                  className="p-2 border rounded w-1/5"
-                                  value={prob.name}
-                                  onChange={(e) => {
-                                    const updatedProblems = [...cls.problems];
-                                    updatedProblems[pIdx].name = e.target.value;
-                                    setNewClass({
-                                      ...newClass,
-                                      problems: updatedProblems,
-                                    });
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Link"
-                                  className="p-2 border rounded w-1/5"
-                                  value={prob.link}
-                                  onChange={(e) => {
-                                    const updatedProblems = [...cls.problems];
-                                    updatedProblems[pIdx].link = e.target.value;
-                                    setNewClass({
-                                      ...newClass,
-                                      problems: updatedProblems,
-                                    });
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Category"
-                                  className="p-2 border rounded w-1/5"
-                                  value={prob.category}
-                                  onChange={(e) => {
-                                    const updatedProblems = [...cls.problems];
-                                    updatedProblems[pIdx].category = e.target.value;
-                                    setNewClass({
-                                      ...newClass,
-                                      problems: updatedProblems,
-                                    });
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Platform"
-                                  className="p-2 border rounded w-1/5"
-                                  value={prob.platform}
-                                  onChange={(e) => {
-                                    const updatedProblems = [...cls.problems];
-                                    updatedProblems[pIdx].platform = e.target.value;
-                                    setNewClass({
-                                      ...newClass,
-                                      problems: updatedProblems,
-                                    });
-                                  }}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => deleteProblem(tIdx, clsIdx, pIdx)}
-                                  className="text-red-500"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </div>
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setNewClass({
-                                  ...newClass,
-                                  problems: [
-                                    ...cls.problems,
-                                    {
-                                      name: "",
-                                      link: "",
-                                      category: "",
-                                      platform: "",
-                                      hidden: false,
-                                    },
-                                  ],
-                                })
-                              }
-                              className="text-indigo-600 text-sm"
-                            >
-                              + Add Problem
-                            </button>
-                            <button 
-                              type="button"
-                              className="text-blue-600 text-sm ml-1"
-                              onClick={()=>navigate('/teacher/problems')}>
-                              + Add Existing Problem
-                            </button>
-                            
-                          </div>
-
-                          <div className="flex gap-2 mt-4">
-                            <button
-                              onClick={saveEditedClass}
-                              className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 flex items-center gap-2"
-                            >
-                              <Save size={16} /> Save Changes
-                            </button>
-                            <button
-                              onClick={cancelEditing}
-                              className="px-4 py-2 bg-gray-500 text-white rounded shadow hover:bg-gray-600 flex items-center gap-2"
-                            >
-                              <X size={16} /> Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        // View Mode
-                        <>
-                          {/* Left side */}
-                          <div className="md:w-1/3 pr-4 border-b md:border-b-0 md:border-r mb-4 md:mb-0">
-                            <div className="text-gray-600 text-sm mb-1">
-                              {cls.date}
-                            </div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                              {cls.className}
-                            </h2>
-                            <h3 className="text-sm font-medium text-gray-700 mb-1">
-                              Content Covered:
-                            </h3>
-                            <ul className="list-disc list-inside space-y-1 text-gray-700">
-                              {cls.contentCovered.map((item, i) => (
-                                <li key={i}>{item}</li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Right side */}
-                          <div className="md:w-2/3 pl-0 md:pl-6">
-                            <h3 className="text-sm font-medium text-gray-700 mb-2">
-                              Problems:
-                            </h3>
-                            <div className="space-y-2">
-                              {cls.problems.map((prob, pIdx) => (
-                                <div
-                                  key={pIdx}
-                                  className={`flex items-center justify-between border rounded-md p-3 bg-white hover:bg-gray-50 transition ${
-                                    prob.hidden ? "opacity-40" : ""
-                                  }`}
-                                >
-                                  <span className="text-gray-900">{prob.name}</span>
-                                  <div className="flex items-center gap-4 text-sm">
-                                    <span
-                                      className={
-                                        categoryColors[prob.category] || "text-gray-700"
-                                      }
-                                    >
-                                      {prob.category}
-                                    </span>
-                                    <span className="text-gray-600">
-                                      {prob.platform}
-                                    </span>
-                                    <a
-                                      href={prob.link}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="text-indigo-600 hover:underline"
-                                    >
-                                      Link
-                                    </a>
-                                    <button
-                                      onClick={() =>
-                                        toggleProblemVisibility(tIdx, clsIdx, pIdx)
-                                      }
-                                      className="text-gray-500 hover:text-gray-700"
-                                    >
-                                      <Eye size={16} />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Notes */}
-                            {cls.notes.length > 0 && (
-                              <div className="flex gap-2 mt-4 text-sm text-indigo-600 font-medium">
-                                <StickyNote size={16} />
-                                <div className="flex gap-2 flex-wrap">
-                                  {cls.notes.map((note, nIdx) => (
-                                    <a
-                                      key={nIdx}
-                                      href={note.link}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="hover:underline"
-                                    >
-                                      {note.name}
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* Add Class Form */}
-                {addClassMode === tIdx && (
-                  <div className="bg-gray-50 border rounded-lg p-6 mb-4">
-                    <h3 className="text-lg font-semibold mb-4">Add New Class</h3>
-
-                    <div className="space-y-3">
-                      <input
-                        type="date"
-                        className="p-2 border rounded w-full"
-                        value={newClass.date}
-                        onChange={(e) =>
-                          setNewClass({ ...newClass, date: e.target.value })
-                        }
-                      />
-
-                      <input
-                        type="text"
-                        placeholder="Class Name"
-                        className="p-2 border rounded w-full"
-                        value={newClass.className}
-                        onChange={(e) =>
-                          setNewClass({ ...newClass, className: e.target.value })
-                        }
-                      />
-
-                      <textarea
-                        placeholder="Content Covered (comma separated)"
-                        className="p-2 border rounded w-full"
-                        value={newClass.contentCovered.join(", ")}
-                        onChange={(e) =>
-                          setNewClass({
-                            ...newClass,
-                            contentCovered: e.target.value
-                              .split(",")
-                              .map((item) => item.trim()),
-                          })
-                        }
-                      ></textarea>
-
-                      {/* Notes */}
-                      <h4 className="font-medium text-gray-700">Notes</h4>
-                      {newClass.notes.map((note, nIdx) => (
-                        <div key={nIdx} className="flex gap-2 mb-2">
-                          <input
-                            type="text"
-                            placeholder="Note Name"
-                            className="p-2 border rounded w-1/2"
-                            value={note.name}
-                            onChange={(e) => {
-                              const updatedNotes = [...newClass.notes];
-                              updatedNotes[nIdx].name = e.target.value;
-                              setNewClass({ ...newClass, notes: updatedNotes });
-                            }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Link"
-                            className="p-2 border rounded w-1/2"
-                            value={note.link}
-                            onChange={(e) => {
-                              const updatedNotes = [...newClass.notes];
-                              updatedNotes[nIdx].link = e.target.value;
-                              setNewClass({ ...newClass, notes: updatedNotes });
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setNewClass({
-                                ...newClass,
-                                notes: newClass.notes.filter(
-                                  (_, idx) => idx !== nIdx
-                                ),
-                              })
-                            }
-                            className="text-red-500"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setNewClass({
-                            ...newClass,
-                            notes: [...newClass.notes, { name: "", link: "" }],
-                          })
-                        }
-                        className="text-indigo-600 text-sm"
-                      >
-                        + Add Note
-                      </button>
-
-                      {/* Problems */}
-                      <h4 className="font-medium text-gray-700">Problems</h4>
-                      {newClass.problems.map((prob, pIdx) => (
-                        <div key={pIdx} className="flex gap-2 mb-2 items-center">
-                          <input
-                            type="text"
-                            placeholder="Problem Name"
-                            className="p-2 border rounded w-1/5"
-                            value={prob.name}
-                            onChange={(e) => {
-                              const updatedProblems = [...newClass.problems];
-                              updatedProblems[pIdx].name = e.target.value;
-                              setNewClass({
-                                ...newClass,
-                                problems: updatedProblems,
-                              });
-                            }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Link"
-                            className="p-2 border rounded w-1/5"
-                            value={prob.link}
-                            onChange={(e) => {
-                              const updatedProblems = [...newClass.problems];
-                              updatedProblems[pIdx].link = e.target.value;
-                              setNewClass({
-                                ...newClass,
-                                problems: updatedProblems,
-                              });
-                            }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Category"
-                            className="p-2 border rounded w-1/5"
-                            value={prob.category}
-                            onChange={(e) => {
-                              const updatedProblems = [...newClass.problems];
-                              updatedProblems[pIdx].category = e.target.value;
-                              setNewClass({
-                                ...newClass,
-                                problems: updatedProblems,
-                              });
-                            }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Platform"
-                            className="p-2 border rounded w-1/5"
-                            value={prob.platform}
-                            onChange={(e) => {
-                              const updatedProblems = [...newClass.problems];
-                              updatedProblems[pIdx].platform = e.target.value;
-                              setNewClass({
-                                ...newClass,
-                                problems: updatedProblems,
-                              });
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setNewClass({
-                                ...newClass,
-                                problems: newClass.problems.filter(
-                                  (_, idx) => idx !== pIdx
-                                ),
-                              })
-                            }
-                            className="text-red-500"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setNewClass({
-                            ...newClass,
-                            problems: [
-                              ...newClass.problems,
-                              {
-                                name: "",
-                                link: "",
-                                category: "",
-                                platform: "",
-                                hidden: false,
-                              },
-                            ],
-                          })
-                        }
-                        className="text-indigo-600 text-sm"
-                      >
-                        + Add Problem
-                      </button>
-                      <button 
-                        type="button"
-                        className="text-blue-600 text-sm ml-1"
-                        onClick={()=>navigate('/teacher/problems')}>
-                        + Add Existing Problem
-                      </button>
-                    </div>
-
-                    <div className="flex gap-2 mt-4">
-                      <button
-                        onClick={saveNewClass}
-                        className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 flex items-center gap-2"
-                      >
-                        <Save size={16} /> Save Class
-                      </button>
-                      <button
-                        onClick={resetNewClass}
-                        className="px-4 py-2 bg-gray-500 text-white rounded shadow hover:bg-gray-600"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Button to add new class */}
+    <div className="min-h-0 bg-gradient-to-b from-slate-50 to-white text-slate-900">
+      <div className="border-b border-slate-200/80 bg-white/90 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-3 py-3 sm:px-5 lg:px-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-amber-800">
+              <Library className="h-5 w-5 shrink-0" aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-wide">
+                Batch workspace
+              </span>
+              {batchName && (
+                <span className="truncate text-sm font-semibold text-slate-800">
+                  · {batchName}
+                </span>
+              )}
+            </div>
+            {isTeacherBatch && batchId && (
+              <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={() => addClassToTopic(tIdx)}
-                  className="mt-4 px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition flex items-center gap-2"
+                  type="button"
+                  onClick={() => navigate("/teacher/problems")}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                 >
-                  <Plus size={16} /> Add Class
+                  <ListTree className="h-3.5 w-3.5" />
+                  My Problem List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/teacher/${batchId}/problemslist`)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Open batch problem list
                 </button>
               </div>
             )}
           </div>
-        ))}
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-3 py-4 sm:px-5 lg:px-6">
+        {(Boolean(batchId) || data.length > 0) && (
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-5">
+            {/* Topics sidebar */}
+            <aside className="w-full shrink-0 lg:w-52 xl:w-56">
+              <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+                <p className="px-1.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  Topics
+                </p>
+                <nav className="space-y-0.5">
+                  {data.map((t, tIdx) => (
+                    <button
+                      key={tIdx}
+                      type="button"
+                      onClick={() => setSelectedTopicIndex(tIdx)}
+                      title={`${t.completed}/${t.total} solved · ${t.classes?.length ?? 0} subtopics`}
+                      className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition ${
+                        selectedTopicIndex === tIdx
+                          ? "bg-amber-50 ring-1 ring-amber-200"
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="min-w-0 flex-1 truncate font-medium text-slate-900">
+                        {t.title}
+                      </span>
+                      <span className="shrink-0 text-[10px] text-slate-400">
+                        {t.classes?.length ?? 0} st
+                      </span>
+                    </button>
+                  ))}
+                </nav>
+
+                {isTeacherBatch && (
+                  <div className="mt-2 border-t border-slate-100 pt-2">
+                    {!newTopicMode ? (
+                      <button
+                        type="button"
+                        onClick={() => setNewTopicMode(true)}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2 text-xs font-medium text-slate-700 hover:border-amber-400 hover:bg-amber-50/50"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        New topic
+                      </button>
+                    ) : (
+                      <div className="space-y-2 rounded-lg bg-slate-50 p-2">
+                        <input
+                          type="text"
+                          placeholder="Topic title"
+                          className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                          value={newTopicTitle}
+                          onChange={(e) => setNewTopicTitle(e.target.value)}
+                          autoFocus
+                        />
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={addTopic}
+                            className="flex-1 rounded-md bg-slate-900 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                          >
+                            Add
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewTopicMode(false);
+                              setNewTopicTitle("");
+                            }}
+                            className="rounded-md border border-slate-200 px-2 py-1.5 text-xs text-slate-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </aside>
+
+            {/* Main workspace */}
+            <main className="min-w-0 flex-1">
+              {data.length === 0 && isTeacherBatch && (
+                <div className="rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center">
+                  <BookOpen className="mx-auto h-9 w-9 text-slate-300" />
+                  <p className="mt-3 text-base font-medium text-slate-800">No topics yet</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Use <strong>New topic</strong> in the sidebar to start this batch.
+                  </p>
+                </div>
+              )}
+
+              {topic && (
+                <>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">{topic.title}</h2>
+                    </div>
+                    {isTeacherBatch && (
+                      <button
+                        type="button"
+                        onClick={() => setAddSubtopicForTopic(true)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Add subtopic
+                      </button>
+                    )}
+                  </div>
+
+                  {isTeacherBatch && addSubtopicForTopic && (
+                    <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <h3 className="text-xs font-semibold text-slate-800">New subtopic</h3>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        <input
+                          type="text"
+                          placeholder="Name (e.g. Lecture 1: Sorting)"
+                          className="rounded-md border border-slate-200 px-2 py-1.5 text-sm sm:col-span-2"
+                          value={newSubtopic.title}
+                          onChange={(e) =>
+                            setNewSubtopic({ ...newSubtopic, title: e.target.value })
+                          }
+                        />
+                        <input
+                          type="url"
+                          placeholder="Notes URL (optional)"
+                          className="rounded-md border border-slate-200 px-2 py-1.5 text-sm sm:col-span-2"
+                          value={newSubtopic.notesLink}
+                          onChange={(e) =>
+                            setNewSubtopic({ ...newSubtopic, notesLink: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => addSubtopic(selectedTopicIndex)}
+                          className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                        >
+                          Save subtopic
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddSubtopicForTopic(false);
+                            setNewSubtopic({ title: "", notesLink: "" });
+                          }}
+                          className="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {topicClasses.length === 0 && !addSubtopicForTopic && (
+                      <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-3 py-5 text-center text-xs text-slate-600">
+                        No subtopics yet. Add one above, then assign problems from your bank.
+                      </p>
+                    )}
+
+                    {topicClasses.map((cls, cIndex) => {
+                      const expanded = expandedSubtopicIndex === cIndex;
+                      return (
+                        <section
+                          key={cIndex}
+                          className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm"
+                        >
+                          <div className="flex flex-wrap items-stretch gap-2 bg-slate-50/80 px-3 py-2.5 sm:px-4">
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              aria-expanded={expanded}
+                              onClick={() => toggleSubtopicExpanded(cIndex)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  toggleSubtopicExpanded(cIndex);
+                                }
+                              }}
+                              className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg outline-none ring-amber-400 focus-visible:ring-2"
+                            >
+                              <ChevronRight
+                                className={`mt-0.5 h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                                  expanded ? "rotate-90" : ""
+                                }`}
+                                aria-hidden
+                              />
+                              <div className="min-w-0 flex-1">
+                                <h3 className="text-sm font-semibold text-slate-900">
+                                  {cls.title}
+                                </h3>
+                                {cls.notesLink && cls.notesLink !== "#" && (
+                                  <a
+                                    href={cls.notesLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                  >
+                                    Notes
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                            {isTeacherBatch && (
+                              <div
+                                className="flex shrink-0 items-center border-t border-slate-200/80 pt-3 sm:border-t-0 sm:pt-0 sm:pl-2 sm:border-l sm:border-slate-200/80"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    goAssignProblems(selectedTopicIndex, cIndex)
+                                  }
+                                  className="rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-50"
+                                >
+                                  Assign from bank
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {expanded && (
+                            <div className="border-t border-slate-100 p-3">
+                              {cls.problems.length === 0 ? (
+                                <p className="py-3 text-center text-xs text-slate-500">
+                                  No problems linked. Use{" "}
+                                  <strong className="text-slate-700">Assign from bank</strong>.
+                                </p>
+                              ) : (
+                                <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100 bg-slate-50/40">
+                                  {cls.problems.map((p, pIndex) => (
+                                    <li
+                                      key={pIndex}
+                                      className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm sm:flex-nowrap"
+                                    >
+                                      <span className={diffBadge(p.difficulty)}>
+                                        {p.difficulty}
+                                      </span>
+                                      <span
+                                        className={platformStyleClass(displayPlatform(p))}
+                                        title={displayPlatform(p)}
+                                      >
+                                        {displayPlatform(p)}
+                                      </span>
+                                      <span className="min-w-0 flex-1 font-medium text-slate-900">
+                                        {p.name}
+                                      </span>
+                                      <a
+                                        href={p.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline"
+                                      >
+                                        Open
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                      </a>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )}
+                        </section>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </main>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default ScheduleCards;
+}

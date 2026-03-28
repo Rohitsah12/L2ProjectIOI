@@ -58,22 +58,24 @@ export default function Students() {
   }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">{batchName} Students</h2>
+    <div className="w-full space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+          {batchName ? `${batchName} · Students` : "Students"}
+        </h2>
         <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-500 px-3 text-white py-1.5 rounded-xl hover:shadow hover:text-black hover:bg-white hover:transition"
+          className="inline-flex shrink-0 items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
         >
           + Add Student
         </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-xl shadow-lg">
-        <table className="min-w-full border-collapse bg-white">
-          <thead className="bg-blue-500 text-white">
+      <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100">
+        <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse">
+          <thead className="bg-slate-800 text-white">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold">ID</th>
               <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
@@ -87,9 +89,9 @@ export default function Students() {
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-200">
             {students.map((student, index) => (
-              <tr className="hover:bg-blue-50 transition" key={student.id}>
+              <tr className="transition hover:bg-sky-50/50" key={student.id}>
                 <td className="px-6 py-4 text-sm text-gray-700 font-medium">
                   {student.id}
                 </td>
@@ -117,6 +119,8 @@ export default function Students() {
             ))}
           </tbody>
         </table>
+        </div>
+      </div>
 
         {/* Modal */}
         <AnimatePresence>
@@ -197,7 +201,6 @@ export default function Students() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
     </div>
   );
 }

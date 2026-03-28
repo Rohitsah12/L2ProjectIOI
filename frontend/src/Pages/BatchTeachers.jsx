@@ -113,15 +113,20 @@ export default function BatchTeachers() {
   };
 
   return (
-    <div className="p-6">
-      <p className="text-sm text-gray-500 mb-4">Dummy data – no API. Add/remove only updates local state.</p>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">Teachers in this batch</h2>
+    <div className="w-full space-y-4">
+      <p className="rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-100">
+        Teacher list uses the API when available; add/remove may update local state if the request fails.
+      </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+          Teachers in this batch
+        </h2>
         <button
+          type="button"
           onClick={() => setIsAddTeacherModalOpen(true)}
-          className="bg-blue-500 px-3 text-white py-1.5 rounded-xl hover:shadow hover:bg-blue-600 transition flex items-center gap-2"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
         >
-          <UserPlus size={18} /> Add Teacher
+          <UserPlus size={18} aria-hidden /> Add Teacher
         </button>
       </div>
 
@@ -189,9 +194,10 @@ export default function BatchTeachers() {
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto rounded-xl shadow-lg">
-        <table className="min-w-full border-collapse bg-white">
-          <thead className="bg-blue-500 text-white">
+      <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100">
+        <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse">
+          <thead className="bg-slate-800 text-white">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
               <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
@@ -199,16 +205,16 @@ export default function BatchTeachers() {
               <th className="px-6 py-3 text-center text-sm font-semibold">Remove from batch</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-200">
             {batchTeachers.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                  No teachers in this batch. Click &quot;Add Teacher&quot; to assign (dummy).
+                <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                  No teachers in this batch. Click &quot;Add Teacher&quot; to assign one.
                 </td>
               </tr>
             ) : (
               batchTeachers.map((teacher) => (
-                <tr className="hover:bg-blue-50 transition" key={teacher.teacherBatchId || teacher.id}>
+                <tr className="transition hover:bg-sky-50/50" key={teacher.teacherBatchId || teacher.id}>
                   <td className="px-6 py-4 text-sm font-medium text-gray-700">{teacher.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{teacher.email}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{teacher.teacherEnrollmentId || "—"}</td>
@@ -226,6 +232,7 @@ export default function BatchTeachers() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
